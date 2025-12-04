@@ -1,0 +1,139 @@
+# =========================================
+#   GLOBAL
+# =========================================
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.sqlite3
+*.db
+env/
+.venv/
+venv/
+ENV/
+.DS_Store
+Thumbs.db
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# =========================================
+#   PYTHON / DJANGO
+# =========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django specific
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# PyInstaller
+build/
+dist/
+
+# SQLite backups
+*.sqlite3*
+
+# Server files
+local_settings.py
+
+# =========================================
+#   NODE / REACT / VITE
+# =========================================
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Vite cache
+.vite/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# =========================================
+#   FRONTEND TOOLS
+# =========================================
+
+# Logs
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor specific
+*.sublime-project
+*.sublime-workspace
+
+# =========================================
+#   OPTIONAL
+# =========================================
+
+# Lock files (if you want reproducible builds, keep them)
+# package-lock.json
+# yarn.lock
+
+# Local environment configs
+config/
+
+
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
