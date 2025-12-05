@@ -1,5 +1,6 @@
 # Django Backend Requirements
 Django==5.0.2
+django-admin
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
