@@ -8,18 +8,61 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f0f9ff; /* Light blue background */
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: #0f172a; /* Dark slate background */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #10b981;
+  background: #3b82f6; /* Blue */
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #059669;
+  background: #2563eb; /* Darker blue on hover */
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(59, 130, 246, 0.3); /* Blue selection */
+  color: white;
+}
+
+.dark ::selection {
+  background-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Custom animation for subtle effects */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Custom card hover effect */
+.hover-card {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dark .hover-card:hover {
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.05);
 }
