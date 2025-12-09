@@ -11,8 +11,8 @@ export default function SecondSection() {
   const features = [
     { icon: Globe, text: "Multilingual Support", color: "text-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
     { icon: Users, text: "Human-like Conversations", color: "text-orange-500", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
-    { icon: Clock, text: "24/7 Availability", color: "text-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
-    { icon: CheckCircle, text: "Zero Wait Time", color: "text-orange-500", bgColor: "bg-orange-100 dark:bg-orange-900/30" }
+    { icon: Clock, text: "24 hours Availability", color: "text-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
+    { icon: CheckCircle, text: "Zero Response Time Issue", color: "text-orange-500", bgColor: "bg-orange-100 dark:bg-orange-900/30" }
   ];
 
   return (
@@ -26,7 +26,7 @@ export default function SecondSection() {
             Ready to <span className="text-blue-600 dark:text-blue-400">Transform</span> Your Communication?
           </h2>
           <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto mt-4 text-lg">
-            Join 500+ businesses using VoiceOS for intelligent customer engagement.
+            Join 500+ businesses using AiHouseOS for intelligent customer engagement.
           </p>
         </div>
 
@@ -53,9 +53,9 @@ export default function SecondSection() {
             <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-900 border border-blue-200 dark:border-blue-800">
               <div className="grid grid-cols-3 text-center gap-8">
                 {[
-                  { label: "Satisfaction", value: "98%", color: "text-blue-600 dark:text-blue-400" },
-                  { label: "Calls/Day", value: "50K+", color: "text-orange-600 dark:text-orange-400" },
-                  { label: "Support", value: "24/7", color: "text-blue-600 dark:text-blue-400" }
+                  { label: "Satisfaction", value: "97%", color: "text-blue-600 dark:text-blue-400" },
+                  { label: "Calls/Day", value: "5K+", color: "text-orange-600 dark:text-orange-400" },
+                  { label: "Support", value: "24 x 7", color: "text-blue-600 dark:text-blue-400" }
                 ].map((s, i) => (
                   <div key={i}>
                     <div className={`text-3xl font-bold ${s.color}`}>
@@ -74,10 +74,10 @@ export default function SecondSection() {
                 <Headphones className="w-5 h-5 text-orange-500" />
               </div>
               <p className="italic text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-2">
-                "VoiceOS reduced our response time by 90%. The blend of intelligent AI with warm, human-like interactions is a game changer for customer support."
+                "AiHouseOS reduced our response time by 90%. The blend of intelligent AI with warm, human-like interactions is a game changer for customer support."
               </p>
-              <div className="font-semibold text-lg text-slate-800 dark:text-slate-200">Sarah Chen</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">CTO, TechCorp</div>
+              <div className="font-semibold text-lg text-slate-800 dark:text-slate-200">Akhil Chawla</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">Founder, Cybokrafts</div>
             </div>
           </div>
 
@@ -133,10 +133,10 @@ function PhoneDemo() {
                 font-bold
               "
             >
-              V
+              AI
             </div>
             <span className="text-lg font-semibold text-gray-200">
-              VoiceOS
+              AiHouseOS
             </span>
           </div>
 
@@ -150,7 +150,7 @@ function PhoneDemo() {
               max-w-[90%]
             "
           >
-            Enter your number to receive a live AI demo call.
+            Enter your phone number
           </div>
 
           {/* Phone Input */}
