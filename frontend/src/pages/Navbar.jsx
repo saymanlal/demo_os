@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { Phone, ChevronRight, Sun, Moon, Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext"; // Add this import
 
-export default function Navbar({ darkMode, setDarkMode }) {
+export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { darkMode, setDarkMode } = useTheme(); // Get from context
 
   React.useEffect(() => {
     setMounted(true);
@@ -63,8 +67,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
           </div>
         </button>
 
-        <button className="px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105 active:scale-95 group">
-          Get Started <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+        {/* GET STARTED BUTTON */}
+        <button 
+          onClick={() => navigate("/auth")}
+          className="px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105 active:scale-95 group"
+        >
+          Get Started 
+          <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
         </button>
       </div>
 
@@ -85,6 +94,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
       {isMobileMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-900 shadow-lg border-t border-slate-200 dark:border-slate-800 md:hidden z-50">
           <div className="max-w-7xl mx-auto px-6 py-6">
+
             {/* Navigation Links */}
             <div className="flex flex-col gap-4 mb-6">
               {navItems.map((item) => (
@@ -99,8 +109,10 @@ export default function Navbar({ darkMode, setDarkMode }) {
               ))}
             </div>
 
-            {/* Mobile Theme Toggle and Button */}
+            {/* Mobile Theme Toggle + Button */}
             <div className="flex items-center justify-between">
+              
+              {/* toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="w-12 h-6 rounded-full p-1 bg-slate-200 dark:bg-slate-800 flex items-center relative transition-all duration-500"
@@ -117,9 +129,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 </div>
               </button>
 
+              {/* MOBILE GET STARTED BUTTON */}
               <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate("/auth");
+                }}
                 className="px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Get Started
               </button>
