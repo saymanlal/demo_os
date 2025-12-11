@@ -1,36 +1,73 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Zap, Shield, Phone } from "lucide-react";
 import Lottie from "lottie-react";
-import heroAnimation from "../assets/animations/hero.json"; // Adjust path as needed
+import heroAnimation from "../assets/animations/hero.json";
 
 export default function Hero() {
   const [mounted, setMounted] = useState(false);
+  const [customerCount, setCustomerCount] = useState(0);
+  const [dailyUsageCount, setDailyUsageCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Counter animations after component mounts
+    const timer = setTimeout(() => {
+      // Animate 500+ counter
+      let currentCustomers = 0;
+      const customerInterval = setInterval(() => {
+        currentCustomers += 20;
+        if (currentCustomers >= 500) {
+          currentCustomers = 500;
+          clearInterval(customerInterval);
+        }
+        setCustomerCount(currentCustomers);
+      }, 20);
+
+      // Animate 25K/day counter
+      let currentUsage = 0;
+      const usageInterval = setInterval(() => {
+        currentUsage += 1000;
+        if (currentUsage >= 25000) {
+          currentUsage = 25000;
+          clearInterval(usageInterval);
+        }
+        setDailyUsageCount(currentUsage);
+      }, 40);
+
+      return () => {
+        clearInterval(customerInterval);
+        clearInterval(usageInterval);
+      };
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const stats = [
     { 
       icon: Zap, 
-      label: "Active Users", 
-      value: "<500ms", 
+      label: "Happy Customers", 
+      value: `${customerCount}+`, 
       bgColor: "bg-blue-100 dark:bg-blue-900/30", 
-      textColor: "text-blue-500" 
+      textColor: "text-blue-500",
+      counter: true
     },
     { 
       icon: Shield, 
       label: "Security", 
-      value: "ISO/GDPR", 
+      value: "100% Guaranteed", 
       bgColor: "bg-orange-100 dark:bg-orange-900/30", 
-      textColor: "text-orange-500" 
+      textColor: "text-orange-500",
+      counter: false
     },
     { 
       icon: Phone, 
-      label: "Scalability", 
-      value: "Millions/day", 
+      label: "Daily Usage", 
+      value: `${(dailyUsageCount / 1000).toFixed(0)}K/day`, 
       bgColor: "bg-blue-100 dark:bg-blue-900/30", 
-      textColor: "text-blue-500" 
+      textColor: "text-blue-500",
+      counter: true
     },
   ];
 
@@ -76,7 +113,7 @@ export default function Hero() {
           Automate voice, SMS, WhatsApp, chat, and email with AI agents that understand intent, trigger workflows, and close the loop with measurable impact.
         </p>
 
-        {/* Stats */}
+        {/* Stats with Counter Animation */}
         <div className="flex flex-wrap gap-10">
           {stats.map((s, i) => (
             <div 
@@ -89,7 +126,9 @@ export default function Hero() {
               }`}>
                 <s.icon className={`w-7 h-7 ${s.textColor} hover:scale-125 transition-transform duration-300`} />
               </div>
-              <div className="text-xl font-bold text-slate-800 dark:text-slate-200">{s.value}</div>
+              <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                {s.counter ? s.value : s.value}
+              </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">{s.label}</div>
             </div>
           ))}

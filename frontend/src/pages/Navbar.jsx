@@ -28,7 +28,7 @@ export default function Navbar() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300">
-            VoiceOS
+            AiHouseOS
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             AI Calling Platform
