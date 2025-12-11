@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import Navbar from "./pages/Navbar";
 import Hero from "./pages/Hero";
 import SecondSection from "./pages/SecondSection";
-import Footer from "./pages/Footer";
+import Footer from "../src/components/Footer";
+import Navbar from "../src/components/Navbar";
 import { useTheme } from "./context/ThemeContext"; // Import useTheme
 
 export default function App() {

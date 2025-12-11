@@ -2,14 +2,16 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 import roboAnimation from "../assets/animations/robolottie.json";
-import { Mail, Lock, User, Phone, Eye, EyeOff, Shield, Sparkles, Globe, Zap, Check, ArrowRight, MessageSquare, Volume2, ChevronLeft, ChevronRight } from "lucide-react";
-import Footer from "./Footer";
+import { Mail, Lock, User, Phone, Eye, EyeOff, Shield, Sparkles, Globe, Zap, Check, ArrowRight, MessageSquare, Volume2, ChevronLeft, ChevronRight, Menu, X, Home, Users, Settings, HelpCircle, BookOpen } from "lucide-react";
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
 
 export default function AuthPages() {
   const [mode, setMode] = useState("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.95 },
@@ -41,9 +43,19 @@ export default function AuthPages() {
     }
   };
 
+  const navItems = [
+    { label: "Home", icon: <Home className="w-4 h-4" /> },
+    { label: "Features", icon: <Zap className="w-4 h-4" /> },
+    { label: "Pricing", icon: <BookOpen className="w-4 h-4" /> },
+    { label: "About", icon: <Users className="w-4 h-4" /> },
+    { label: "Docs", icon: <BookOpen className="w-4 h-4" /> },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-950 dark:to-black text-slate-900 dark:text-slate-100 transition-all duration-500 overflow-x-hidden">
       
+      {/* Navbar */}
+       <Navbar />
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-r from-blue-100 to-sky-100 dark:from-blue-900/20 dark:to-sky-900/20 rounded-full blur-3xl"></div>
@@ -51,49 +63,16 @@ export default function AuthPages() {
         <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full blur-3xl"></div>
       </div>
 
+
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center p-4 z-10">
         <div className="w-full max-w-6xl z-10">
-          {/* Logo Header */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <div className="inline-flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
-                <Phone className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">VoiceOS</h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400">AI Calling Platform</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-4 text-base text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                <span>Enterprise Security</span>
-              </div>
-              <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                <span>Real-time AI Calls</span>
-              </div>
-              <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                <span>Smart Conversations</span>
-              </div>
-            </div>
-          </motion.div>
-
           {/* Main Wide Auth Card */}
           <motion.div 
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl rounded-3xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden min-h-[600px] flex"
+            className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl rounded-3xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden min-h-[600px] flex mt-8"
           >
             
             {/* LEFT SIDE - Lottie Animation */}
