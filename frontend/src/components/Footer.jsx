@@ -114,8 +114,8 @@ export default function Footer() {
                   <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">VoiceOS</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">AI Communication Platform</p>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">AiHouseOS</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">AI for Growth</p>
                 </div>
               </div>
               
