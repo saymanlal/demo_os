@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Lottie from "lottie-react";
+import roboAnimation from "../assets/animations/robolottie.json";
 import { Mail, Lock, User, Phone, Eye, EyeOff, Shield, Sparkles, Globe, Zap, Check, ArrowRight, MessageSquare, Volume2, ChevronLeft, ChevronRight } from "lucide-react";
 import Footer from "./Footer";
 
@@ -94,171 +96,85 @@ export default function AuthPages() {
             className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl rounded-3xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden min-h-[600px] flex"
           >
             
-            {/* LEFT SIDE */}
-            <div className="w-1/2 p-12 relative overflow-hidden">
-              {/* Background Gradient - Changes based on mode */}
-              <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-blue-500/10 to-sky-500/10 rounded-full blur-3xl"></div>
+            {/* LEFT SIDE - Lottie Animation */}
+            <div className="w-1/2 p-12 relative flex items-center justify-center overflow-hidden">
+              {/* Background Gradient */}
+              <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-blue-500/20 to-sky-500/20 rounded-full blur-3xl"></div>
               
               <motion.div 
                 variants={itemVariants}
-                className="relative z-10 h-full flex flex-col"
+                className="relative z-10 flex flex-col items-center justify-center w-full h-full"
               >
-                {/* Toggle Option for Left Side */}
-                <div className="mb-8">
-                  <button
-                    onClick={() => switchMode(mode === "signup" ? "signin" : "signup")}
-                    className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 group"
-                  >
-                    {mode === "signup" ? (
-                      <>
-                        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-                        <span>Go to Sign In</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Go to Sign Up</span>
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Lottie Animation */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-sky-500/30 rounded-full blur-3xl scale-150"></div>
+                  <Lottie 
+                    animationData={roboAnimation}
+                    loop={true}
+                    autoplay={true}
+                    className="w-[350px] h-[350px] drop-shadow-2xl relative z-10"
+                  />
+                </motion.div>
 
-                {/* Content based on active mode */}
+                {/* Animated Title */}
                 <AnimatePresence mode="wait">
                   {mode === "signup" ? (
                     <motion.div
-                      key="left-signup"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.4 }}
-                      className="flex-grow"
+                      key="signup-title"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="text-center mt-8"
                     >
-                      {/* Header */}
-                      <div className="mb-10">
-                        <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-3">
-                          Create Account
-                        </h2>
-                        <p className="text-lg text-slate-600 dark:text-slate-400">
-                          Join thousands of businesses using VoiceOS AI calling
-                        </p>
-                      </div>
-
-                      {/* Features List */}
-                      <div className="space-y-6 mb-8">
-                        {[
-                          { icon: <Volume2 className="w-6 h-6" />, text: "AI Voice Agents that sound human", color: "text-blue-500" },
-                          { icon: <MessageSquare className="w-6 h-6" />, text: "Smart conversation management", color: "text-green-500" },
-                          { icon: <Zap className="w-6 h-6" />, text: "Real-time call analytics", color: "text-purple-500" },
-                          { icon: <Shield className="w-6 h-6" />, text: "Enterprise-grade security", color: "text-amber-500" },
-                        ].map((feature, index) => (
-                          <motion.div 
-                            key={index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="flex items-center gap-4"
-                          >
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color.includes('blue') ? 'from-blue-500/20 to-blue-600/20' : feature.color.includes('green') ? 'from-green-500/20 to-green-600/20' : feature.color.includes('purple') ? 'from-purple-500/20 to-purple-600/20' : 'from-amber-500/20 to-amber-600/20'} flex items-center justify-center`}>
-                              <div className={feature.color}>
-                                {feature.icon}
-                              </div>
-                            </div>
-                            <span className="text-lg text-slate-700 dark:text-slate-300">{feature.text}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {/* Stats */}
-                      <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-2xl mb-8">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">10K+</div>
-                          <div className="text-sm text-slate-600 dark:text-slate-400">Active Users</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">99.9%</div>
-                          <div className="text-sm text-slate-600 dark:text-slate-400">Uptime</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">24/7</div>
-                          <div className="text-sm text-slate-600 dark:text-slate-400">Support</div>
-                        </div>
-                      </div>
-
-                      {/* Call to Action */}
-                      <div className="text-center">
-                        <p className="text-slate-600 dark:text-slate-400 mb-4">
-                          Ready to transform your communication?
-                        </p>
-                        <button
-                          onClick={() => switchMode("signup")}
-                          className="w-full py-4 rounded-xl font-semibold text-lg transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden group bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
-                        >
-                          <span>Get Started Free</span>
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                        </button>
-                      </div>
+                      <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                        Join VoiceOS
+                      </h2>
+                      <p className="text-slate-600 dark:text-slate-400 text-lg">
+                        Where AI meets human-like conversations
+                      </p>
                     </motion.div>
                   ) : (
                     <motion.div
-                      key="left-signin"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.4 }}
-                      className="flex-grow"
+                      key="signin-title"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="text-center mt-8"
                     >
-                      {/* Sign In Preview */}
-                      <div className="mb-10">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
-                          Welcome Back!
-                        </h2>
-                        <p className="text-lg text-slate-600 dark:text-slate-400">
-                          Sign in to access your dashboard and analytics
-                        </p>
-                      </div>
-
-                      {/* Benefits of Signing In */}
-                      <div className="space-y-6 mb-8">
-                        {[
-                          { icon: <Zap className="w-6 h-6" />, text: "Access real-time call analytics", color: "text-blue-500" },
-                          { icon: <MessageSquare className="w-6 h-6" />, text: "Manage your AI agents", color: "text-green-500" },
-                          { icon: <Shield className="w-6 h-6" />, text: "Secure account access", color: "text-purple-500" },
-                          { icon: <Volume2 className="w-6 h-6" />, text: "Configure voice settings", color: "text-amber-500" },
-                        ].map((feature, index) => (
-                          <motion.div 
-                            key={index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="flex items-center gap-4"
-                          >
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color.includes('blue') ? 'from-blue-500/20 to-blue-600/20' : feature.color.includes('green') ? 'from-green-500/20 to-green-600/20' : feature.color.includes('purple') ? 'from-purple-500/20 to-purple-600/20' : 'from-amber-500/20 to-amber-600/20'} flex items-center justify-center`}>
-                              <div className={feature.color}>
-                                {feature.icon}
-                              </div>
-                            </div>
-                            <span className="text-lg text-slate-700 dark:text-slate-300">{feature.text}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {/* Quick Sign In Button */}
-                      <div className="text-center">
-                        <p className="text-slate-600 dark:text-slate-400 mb-4">
-                          Returning user?
-                        </p>
-                        <button
-                          onClick={() => switchMode("signin")}
-                          className="w-full py-4 rounded-xl font-semibold text-lg transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden group bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
-                        >
-                          <span>Sign In Now</span>
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                        </button>
-                      </div>
+                      <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                        Welcome Back
+                      </h2>
+                      <p className="text-slate-600 dark:text-slate-400 text-lg">
+                        Continue your AI calling journey
+                      </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Mode Switch Button */}
+                <motion.button
+                  onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="mt-8 px-6 py-3 bg-gradient-to-r from-blue-500/10 to-sky-500/10 hover:from-blue-500/20 hover:to-sky-500/20 text-blue-600 dark:text-blue-400 font-medium rounded-xl border border-blue-500/20 transition-all duration-300 flex items-center gap-2 group"
+                >
+                  {mode === "signup" ? (
+                    <>
+                      <span>Already have an account?</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  ) : (
+                    <>
+                      <span>New to VoiceOS?</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </motion.button>
               </motion.div>
             </div>
 
@@ -271,27 +187,7 @@ export default function AuthPages() {
                 variants={itemVariants}
                 className="relative z-10 h-full flex flex-col"
               >
-                {/* Toggle Option for Right Side */}
-                <div className="mb-8 flex justify-end">
-                  <button
-                    onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
-                    className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 group"
-                  >
-                    {mode === "signin" ? (
-                      <>
-                        <span>Go to Sign Up</span>
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </>
-                    ) : (
-                      <>
-                        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-                        <span>Go to Sign In</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Active Mode Indicator */}
+                {/* Mode Indicator */}
                 <div className="relative mb-10">
                   <div className="h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                     <motion.div 
