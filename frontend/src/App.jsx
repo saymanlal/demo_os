@@ -3,28 +3,27 @@ import Hero from "./pages/Hero";
 import SecondSection from "./pages/SecondSection";
 import Footer from "../src/components/Footer";
 import Navbar from "../src/components/Navbar";
-import { useTheme } from "./context/ThemeContext"; // Import useTheme
+import { useTheme } from "./context/ThemeContext";
 
 export default function App() {
   const [mounted, setMounted] = React.useState(false);
-  const { darkMode } = useTheme(); // Get darkMode from context
+  const { darkMode } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   return (
-    // Remove className={darkMode ? "dark" : ""} since ThemeProvider handles it
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-950 dark:to-black text-slate-900 dark:text-slate-100 transition-all duration-500 overflow-x-hidden">
       
-      {/* NAVBAR - Remove darkMode/setDarkMode props */}
+      {/* NAVBAR */}
       <Navbar />
-      
-      {/* HERO SECTION */}
-      <div className="pt-4">
+
+      {/* HERO SECTION - padding top equal to navbar height to avoid overlap */}
+      <div className="pt-[44px]">
         <Hero mounted={mounted} />
       </div>
-      
+
       {/* SECOND SECTION */}
       <SecondSection />
       
@@ -39,16 +38,16 @@ export default function App() {
         .animate-bounce-subtle {
           animation: bounce-subtle 2s ease-in-out infinite;
         }
-        
+
         html {
           scroll-behavior: smooth;
         }
-        
+
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        
+
         body {
           animation: fadeIn 0.5s ease-out;
         }
