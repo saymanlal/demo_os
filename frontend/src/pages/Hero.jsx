@@ -44,7 +44,7 @@ export default function Hero() {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-20 items-center">
+    <section className="max-w-7xl mx-auto px-6 py-[2px] grid lg:grid-cols-2 gap-20 items-center">
       <div className={`transition-all duration-1000 ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"}`}>
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 border mb-6">
           <Sparkles className="w-4 h-4 text-blue-500" />
@@ -76,7 +76,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="flex justify-center lg:justify-end">
+      <div className="flex justify-center ml:justify-end">
         <PhoneDemo />
       </div>
     </section>
