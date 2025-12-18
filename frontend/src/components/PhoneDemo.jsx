@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AppleLogo from "../assets/apple-logo.png";
 
 export default function PhoneDemo() {
@@ -19,6 +19,12 @@ export default function PhoneDemo() {
   const [newMessage, setNewMessage] = useState("");
   const [newEmail, setNewEmail] = useState({ to: "", subject: "", body: "" });
   const [audio] = useState(new Audio("https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3"));
+  const [cameraPermission, setCameraPermission] = useState(null);
+  const [currentWebPage, setCurrentWebPage] = useState(null);
+  const [showCameraPermissionDialog, setShowCameraPermissionDialog] = useState(false);
+  const [bootProgress, setBootProgress] = useState(0);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   // Initialize with data
   useEffect(() => {
@@ -83,13 +89,27 @@ export default function PhoneDemo() {
     };
   }, []);
 
-  // Start animation
+  // Enhanced boot animation with progress
   useEffect(() => {
-    setTimeout(() => setStage("black"), 3000);
-    setTimeout(() => {
-      setStage("home");
-      setActiveApp("home");
-    }, 3500);
+    let progress = 0;
+    const bootInterval = setInterval(() => {
+      progress += 3;
+      setBootProgress(progress);
+      if (progress >= 100) {
+        clearInterval(bootInterval);
+        setTimeout(() => setStage("black"), 300);
+        setTimeout(() => {
+          setStage("home");
+          setActiveApp("home");
+          // Auto open phone app after 1 second
+          setTimeout(() => {
+            handlePhoneClick();
+          }, 1000);
+        }, 800);
+      }
+    }, 50);
+
+    return () => clearInterval(bootInterval);
   }, []);
 
   // Music control
@@ -100,6 +120,15 @@ export default function PhoneDemo() {
       audio.pause();
     }
   }, [musicPlaying, audio]);
+
+  // Camera cleanup
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   // Phone functions
   const press = (val) => {
@@ -117,70 +146,201 @@ export default function PhoneDemo() {
   };
 
   const handleBackToHome = () => {
+    // Stop camera if active
+    if (cameraActive && streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      setCameraActive(false);
+    }
     setStage("home");
     setActiveApp("home");
+    setCurrentWebPage(null);
+  };
+
+  const handleBack = () => {
+    if (currentWebPage) {
+      setCurrentWebPage(null);
+    } else {
+      handleBackToHome();
+    }
   };
 
   const handleAppClick = (appName) => {
     if (appName === "phone") {
       handlePhoneClick();
+    } else if (appName === "camera") {
+      handleCameraClick();
     } else {
       setActiveApp(appName);
       setStage(appName);
+      setCurrentWebPage(null);
     }
   };
 
-  // Real search function
+  // Real search function within app
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
     
     try {
-      // Using DuckDuckGo instant answer API
-      const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1`);
-      const data = await response.json();
+      // Simulate search with mock browser
+      const mockPages = {
+        "google": {
+          title: "Google",
+          content: `
+            <div class="p-8 bg-white min-h-screen">
+              <div class="max-w-3xl mx-auto">
+                <div class="flex items-center mb-8">
+                  <div class="text-3xl font-bold text-gray-800 mr-4">Google</div>
+                  <div class="flex-1">
+                    <div class="relative">
+                      <input type="text" value="${searchQuery}" class="w-full px-4 py-3 border rounded-full shadow-sm" readonly />
+                    </div>
+                  </div>
+                </div>
+                <div class="space-y-6">
+                  <div class="border-l-4 border-blue-500 pl-4">
+                    <h3 class="text-lg font-semibold text-gray-800">${searchQuery} - Wikipedia</h3>
+                    <p class="text-gray-600 mt-2">Learn more about ${searchQuery} on Wikipedia, the free encyclopedia.</p>
+                  </div>
+                  <div class="border-l-4 border-green-500 pl-4">
+                    <h3 class="text-lg font-semibold text-gray-800">${searchQuery} News</h3>
+                    <p class="text-gray-600 mt-2">Latest news and updates about ${searchQuery} from around the world.</p>
+                  </div>
+                  <div class="border-l-4 border-purple-500 pl-4">
+                    <h3 class="text-lg font-semibold text-gray-800">${searchQuery} Videos</h3>
+                    <p class="text-gray-600 mt-2">Watch videos and tutorials about ${searchQuery} on YouTube.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+        },
+        "wikipedia": {
+          title: `Wikipedia - ${searchQuery}`,
+          content: `
+            <div class="p-8 bg-white min-h-screen">
+              <div class="max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">${searchQuery}</h1>
+                <div class="prose prose-lg">
+                  <p class="text-gray-700 mb-4">
+                    ${searchQuery} is a topic of interest in various fields. This is a simulated Wikipedia page for demonstration purposes.
+                  </p>
+                  <p class="text-gray-700 mb-4">
+                    In this interactive demo, you're experiencing a fully functional browser within the iPhone interface. All content is loaded and displayed internally.
+                  </p>
+                  <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-2">Did you know?</h3>
+                    <p class="text-blue-700">
+                      This browser simulation shows how web content can be rendered within the app without opening external tabs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+        }
+      };
+
+      // Select a mock page based on search query
+      const pageKey = searchQuery.toLowerCase().includes('wiki') ? 'wikipedia' : 'google';
+      setCurrentWebPage(mockPages[pageKey]);
+      setSearchResults([]);
       
-      if (data.AbstractText) {
-        setSearchResults([
-          { 
-            id: 1, 
-            title: data.Heading || searchQuery, 
-            snippet: data.AbstractText,
-            url: data.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`
-          }
-        ]);
-      } else {
-        // Fallback mock results
-        setSearchResults([
-          { id: 1, title: `${searchQuery} - Search Results`, url: `https://google.com/search?q=${encodeURIComponent(searchQuery)}`, snippet: "Search results for your query" },
-          { id: 2, title: "Wikipedia", url: `https://wikipedia.org/wiki/${encodeURIComponent(searchQuery)}`, snippet: "Wikipedia article about your search" },
-          { id: 3, title: "YouTube", url: `https://youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`, snippet: "Videos related to your search" },
-        ]);
-      }
     } catch (error) {
-      // Mock results on error
-      setSearchResults([
-        { id: 1, title: "React Documentation", url: "https://reactjs.org", snippet: "A JavaScript library for building user interfaces" },
-        { id: 2, title: "Tailwind CSS", url: "https://tailwindcss.com", snippet: "A utility-first CSS framework" },
-        { id: 3, title: "Node.js", url: "https://nodejs.org", snippet: "JavaScript runtime built on Chrome's V8 engine" },
-      ]);
+      console.error("Search error:", error);
+      setCurrentWebPage({
+        title: "Error",
+        content: `<div class="p-8 text-center"><div class="text-red-500 text-xl">Unable to load page</div></div>`
+      });
     }
     
     setIsSearching(false);
   };
 
+  // Camera functions
+  const handleCameraClick = async () => {
+    if (cameraPermission === null) {
+      setShowCameraPermissionDialog(true);
+      return;
+    }
+    
+    if (cameraPermission === 'granted') {
+      setStage('camera');
+      setActiveApp('camera');
+      startCamera();
+    } else {
+      // Show permission denied screen
+      setStage('cameraDenied');
+      setActiveApp('cameraDenied');
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    try {
+      // Simulate permission request with realistic delay
+      setTimeout(() => {
+        setCameraPermission('granted');
+        setShowCameraPermissionDialog(false);
+        setStage('camera');
+        setActiveApp('camera');
+        startCamera();
+      }, 800);
+    } catch (error) {
+      setCameraPermission('denied');
+      setShowCameraPermissionDialog(false);
+    }
+  };
+
+  const denyCameraPermission = () => {
+    setCameraPermission('denied');
+    setShowCameraPermissionDialog(false);
+    setStage('cameraDenied');
+    setActiveApp('cameraDenied');
+  };
+
+  const startCamera = async () => {
+    try {
+      // Try to get real camera access
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setCameraActive(true);
+      }
+    } catch (error) {
+      console.log("Camera not available, using simulation");
+      // Fallback to simulation
+      setCameraActive(true);
+    }
+  };
+
   const handleTakePhoto = () => {
-    setCameraActive(true);
+    if (!cameraActive) return;
+    
+    // Flash effect
+    document.querySelector('.camera-flash')?.classList.add('active');
     setTimeout(() => {
+      document.querySelector('.camera-flash')?.classList.remove('active');
+      
+      // Add new photo
       const newPhoto = {
         id: photos.length + 1,
         url: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/300/300`,
         label: `Photo ${photos.length + 1}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setPhotos(prev => [newPhoto, ...prev]);
-      setCameraActive(false);
-    }, 1000);
+      
+      // Show confirmation
+      setTimeout(() => {
+        setStage('photoPreview');
+        setActiveApp('photoPreview');
+      }, 300);
+    }, 200);
   };
 
   const handlePlayMusic = () => {
@@ -297,7 +457,7 @@ export default function PhoneDemo() {
     </div>
   );
 
-  // App icons - Added Maps icon
+  // App icons
   const AppIcons = {
     Phone: () => (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -354,7 +514,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-900 animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col">
               <div className="flex items-center mb-4">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Messages</div>
               </div>
               
@@ -397,7 +557,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-gradient-to-b from-red-600 to-red-900 animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col">
               <div className="flex items-center mb-4">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Mail</div>
               </div>
               
@@ -452,51 +612,79 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-white animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col">
               <div className="flex items-center mb-4">
-                <button onClick={handleBackToHome} className="text-gray-600 text-xl mr-3 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">←</button>
-                <div className="text-black text-xl font-semibold">Safari</div>
+                <button onClick={handleBack} className="text-gray-600 text-xl mr-3 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">←</button>
+                <div className="text-black text-xl font-semibold">{currentWebPage?.title || "Safari"}</div>
               </div>
               
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search web..."
-                  className="flex-1 bg-gray-100 text-black placeholder-gray-500 px-4 py-3 rounded-full outline-none"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <button 
-                  onClick={handleSearch}
-                  disabled={isSearching}
-                  className="bg-blue-500 text-white px-5 py-3 rounded-full font-medium active:bg-blue-600 disabled:opacity-50"
-                >
-                  {isSearching ? "..." : "Go"}
-                </button>
-              </div>
+              {!currentWebPage ? (
+                <>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search web..."
+                      className="flex-1 bg-gray-100 text-black placeholder-gray-500 px-4 py-3 rounded-full outline-none"
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <button 
+                      onClick={handleSearch}
+                      disabled={isSearching}
+                      className="bg-blue-500 text-white px-5 py-3 rounded-full font-medium active:bg-blue-600 disabled:opacity-50"
+                    >
+                      {isSearching ? "..." : "Go"}
+                    </button>
+                  </div>
 
-              <div className="flex-1 overflow-y-auto pb-4">
-                {searchResults.length > 0 ? (
-                  <div className="space-y-3">
-                    {searchResults.map(result => (
-                      <a 
-                        key={result.id}
-                        href={result.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-gray-50 hover:bg-gray-100 rounded-xl p-4 transition-colors border border-gray-200"
-                      >
-                        <div className="text-blue-600 font-medium text-lg">{result.title}</div>
-                        <div className="text-gray-500 text-sm truncate">{result.url}</div>
-                        <div className="text-gray-700 text-sm mt-2">{result.snippet}</div>
-                      </a>
-                    ))}
+                  <div className="flex-1 overflow-y-auto pb-4">
+                    {searchResults.length > 0 ? (
+                      <div className="space-y-3">
+                        {searchResults.map(result => (
+                          <button
+                            key={result.id}
+                            onClick={() => handleSearch()}
+                            className="block bg-gray-50 hover:bg-gray-100 rounded-xl p-4 transition-colors border border-gray-200 w-full text-left"
+                          >
+                            <div className="text-blue-600 font-medium text-lg">{result.title}</div>
+                            <div className="text-gray-700 text-sm mt-2">{result.snippet}</div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <div className="text-6xl mb-6">🌐</div>
+                        <div className="text-gray-500 text-center text-lg mb-2">Safari Browser</div>
+                        <div className="text-gray-400 text-center">Search the web without leaving the app</div>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-gray-500 text-center mt-8">
-                    {searchQuery ? "No results found" : "Enter a search term above"}
+                </>
+              ) : (
+                <div className="flex-1 overflow-y-auto pb-4">
+                  <div className="border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-gray-100 px-4 py-2 flex items-center gap-2 border-b">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <div className="flex-1 text-center text-sm text-gray-600 truncate">
+                        {currentWebPage.title}
+                      </div>
+                    </div>
+                    <div 
+                      className="bg-white min-h-[400px] overflow-y-auto"
+                      dangerouslySetInnerHTML={{ __html: currentWebPage.content }}
+                    />
                   </div>
-                )}
-              </div>
+                  <div className="mt-4 flex justify-center">
+                    <button 
+                      onClick={() => setCurrentWebPage(null)}
+                      className="bg-blue-500 text-white px-6 py-2 rounded-lg font-medium"
+                    >
+                      Back to Search
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -506,7 +694,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-gradient-to-b from-green-600 to-green-900 animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col items-center justify-center">
               <div className="flex items-center mb-4 w-full">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Maps</div>
               </div>
               
@@ -534,7 +722,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-black animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col">
               <div className="flex items-center mb-4">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Photos</div>
               </div>
               
@@ -575,33 +763,115 @@ export default function PhoneDemo() {
       case 'camera':
         return (
           <div className="absolute inset-0 bg-black animate-slideUp">
+            <div className="relative h-full">
+              {/* Camera flash overlay */}
+              <div className="camera-flash absolute inset-0 bg-white opacity-0 transition-opacity duration-200 z-10 pointer-events-none"></div>
+              
+              <div className="pt-12 px-4 h-full flex flex-col items-center">
+                <div className="flex items-center mb-4 w-full">
+                  <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-20">←</button>
+                  <div className="text-white text-xl font-semibold">Camera</div>
+                </div>
+                
+                {/* Camera viewfinder */}
+                <div className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/20 mb-8">
+                  {streamRef.current ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+                      <div className="text-white text-6xl">📷</div>
+                    </div>
+                  )}
+                  
+                  {/* Camera grid */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="h-full w-full grid grid-cols-3 grid-rows-3">
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className="border border-white/10"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Camera controls */}
+                <div className="flex items-center justify-between w-full max-w-md px-8 mb-4">
+                  <button className="text-white text-3xl p-3 rounded-full bg-white/10">
+                    ↺
+                  </button>
+                  <button 
+                    onClick={handleTakePhoto}
+                    className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-xl active:scale-95 transition-transform"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-white border-4 border-gray-800"></div>
+                  </button>
+                  <button className="text-white text-3xl p-3 rounded-full bg-white/10">
+                    ⚡
+                  </button>
+                </div>
+                
+                <div className="text-gray-400 text-center text-lg">
+                  {cameraActive ? "Tap to capture" : "Camera is active"}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'cameraDenied':
+        return (
+          <div className="absolute inset-0 bg-black animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col items-center justify-center">
               <div className="flex items-center mb-4 w-full">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Camera</div>
               </div>
               
-              <div className="relative w-72 h-72 rounded-3xl overflow-hidden border-4 border-white/30 mb-8">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-                  {cameraActive ? (
-                    <div className="animate-pulse">
-                      <div className="text-white text-5xl">📸</div>
-                    </div>
-                  ) : (
-                    <div className="text-white text-6xl">📷</div>
-                  )}
+              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 text-center w-full max-w-sm">
+                <div className="text-white text-6xl mb-6">📵</div>
+                <div className="text-white text-2xl mb-4">Camera Access Required</div>
+                <div className="text-white/80 mb-8">
+                  To use the camera, please allow camera access in your browser settings.
+                </div>
+                <button 
+                  onClick={handleBack}
+                  className="w-full bg-white/30 text-white py-3 rounded-xl font-medium active:bg-white/40"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'photoPreview':
+        return (
+          <div className="absolute inset-0 bg-black animate-slideUp">
+            <div className="pt-12 px-4 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => { setStage('camera'); setActiveApp('camera'); }} className="text-white text-xl w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <div className="text-white text-xl font-semibold">Photo</div>
+                <button onClick={() => { setStage('photos'); setActiveApp('photos'); }} className="text-blue-400 text-lg font-medium">Done</button>
+              </div>
+              
+              <div className="flex-1 flex items-center justify-center">
+                <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden">
+                  <img 
+                    src={photos[0]?.url || `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/300/300`}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
               
-              <button 
-                onClick={handleTakePhoto}
-                className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-xl active:scale-95 transition-transform mb-4"
-              >
-                <div className="w-16 h-16 rounded-full bg-white border-4 border-gray-800"></div>
-              </button>
-              
-              <div className="text-gray-400 text-center text-lg">
-                {cameraActive ? "Capturing photo..." : "Tap to take photo"}
+              <div className="py-4 flex justify-center gap-6">
+                <button className="text-white/70 text-sm">Edit</button>
+                <button className="text-white/70 text-sm">Share</button>
+                <button className="text-white/70 text-sm">Delete</button>
               </div>
             </div>
           </div>
@@ -612,7 +882,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col">
               <div className="flex items-center mb-4">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Settings</div>
               </div>
               
@@ -648,7 +918,7 @@ export default function PhoneDemo() {
           <div className="absolute inset-0 bg-gradient-to-b from-pink-900 to-purple-900 animate-slideUp">
             <div className="pt-12 px-4 h-full flex flex-col items-center justify-center">
               <div className="flex items-center mb-4 w-full">
-                <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                 <div className="text-white text-xl font-semibold">Music</div>
               </div>
               
@@ -693,8 +963,9 @@ export default function PhoneDemo() {
       case 'phoneOpening':
         return (
           <div className="absolute inset-0 bg-gradient-to-b from-green-600 to-green-900 animate-pulse">
-            <div className="flex items-center justify-center h-full">
-              <div className="text-white text-6xl animate-bounce">📞</div>
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="text-white text-6xl animate-bounce mb-4">📞</div>
+              <div className="text-white text-xl">Opening Phone...</div>
             </div>
           </div>
         );
@@ -705,7 +976,7 @@ export default function PhoneDemo() {
             <div className="flex flex-col h-full">
               <div className="pt-12 px-6">
                 <div className="flex items-center mb-6">
-                  <button onClick={handleBackToHome} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
+                  <button onClick={handleBack} className="text-white text-xl mr-3 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">←</button>
                   <div className="text-white text-xl font-semibold">Phone</div>
                 </div>
                 
@@ -745,11 +1016,37 @@ export default function PhoneDemo() {
     }
   };
 
+  // Camera permission dialog
+  const CameraPermissionDialog = () => (
+    <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 animate-fadeIn">
+      <div className="bg-gray-900 rounded-3xl p-8 max-w-xs mx-4">
+        <div className="text-white text-2xl font-bold mb-2">"iPhone Demo" Would Like to Access the Camera</div>
+        <div className="text-gray-400 mb-6">
+          This allows you to take photos and record videos.
+        </div>
+        <div className="space-y-3">
+          <button
+            onClick={requestCameraPermission}
+            className="w-full bg-blue-500 text-white py-3 rounded-xl font-medium active:bg-blue-600"
+          >
+            OK
+          </button>
+          <button
+            onClick={denyCameraPermission}
+            className="w-full bg-gray-800 text-white py-3 rounded-xl font-medium active:bg-gray-700"
+          >
+            Don't Allow
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="relative">
-        {/* Phone Frame */}
-        <div className="relative w-[390px] h-[844px] bg-gray-950 rounded-[50px] border-[12px] border-gray-800 shadow-2xl overflow-hidden transform scale-95">
+        {/* Phone Frame - Made more responsive */}
+        <div className="relative w-[350px] h-[760px] sm:w-[390px] sm:h-[844px] bg-gray-950 rounded-[50px] border-[12px] border-gray-800 shadow-2xl overflow-hidden transform scale-95 sm:scale-100 transition-all duration-300">
           
           {/* Status Bar */}
           <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-black/80 to-transparent z-50 flex items-center justify-between px-8 pt-1">
@@ -763,10 +1060,17 @@ export default function PhoneDemo() {
           {/* Screen Content */}
           <div className="absolute inset-0">
             
-            {/* Apple Logo Stage */}
+            {/* Apple Logo Stage with boot progress */}
             {stage === "apple" && (
-              <div className="absolute inset-0 bg-black flex items-center justify-center animate-fadeIn">
-                <img src={AppleLogo} alt="Apple" className="w-40 h-40 animate-pulse" />
+              <div className="absolute inset-0 bg-black flex flex-col items-center justify-center animate-fadeIn">
+                <img src={AppleLogo} alt="Apple" className="w-32 h-32 sm:w-40 sm:h-40 mb-8" />
+                <div className="w-48 sm:w-56 h-1 bg-gray-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white transition-all duration-300"
+                    style={{ width: `${bootProgress}%` }}
+                  />
+                </div>
+                <div className="text-gray-500 mt-4 text-sm">Starting up...</div>
               </div>
             )}
 
@@ -778,7 +1082,7 @@ export default function PhoneDemo() {
             {/* Home Screen */}
             {stage === "home" && (
               <div className="absolute inset-0 bg-gradient-to-b from-blue-900/90 to-purple-900/90 backdrop-blur-sm pt-12 pb-24 px-6 animate-fadeIn">
-                <div className="grid grid-cols-4 gap-5 mt-6">
+                <div className="grid grid-cols-4 gap-4 sm:gap-5 mt-6">
                   <AppIcon 
                     icon={<AppIcons.Phone />} 
                     label="Phone" 
@@ -838,7 +1142,7 @@ export default function PhoneDemo() {
             )}
 
             {/* App Screens */}
-            {['messages', 'mail', 'safari', 'maps', 'photos', 'camera', 'settings', 'music', 'phoneOpening', 'dial'].includes(stage) && (
+            {['messages', 'mail', 'safari', 'maps', 'photos', 'camera', 'cameraDenied', 'photoPreview', 'settings', 'music', 'phoneOpening', 'dial'].includes(stage) && (
               renderAppScreen(stage)
             )}
 
@@ -848,9 +1152,19 @@ export default function PhoneDemo() {
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full"></div>
           
           {/* Dynamic Island */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-6  rounded-full"></div>
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-full"></div>
         </div>
       </div>
+
+      {/* Camera Permission Dialog */}
+      {showCameraPermissionDialog && <CameraPermissionDialog />}
+
+      {/* CSS for flash animation */}
+      <style jsx>{`
+        .camera-flash.active {
+          opacity: 1;
+        }
+      `}</style>
     </div>
   );
 }
