@@ -155,15 +155,3 @@ TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 
-
-# =========================
-# SENDGRID
-# =========================
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
-# =========================
-# FAST2SMS
-# =========================
-FAST2SMS_API_KEY = os.getenv("FAST2SMS_API_KEY")
-OTP_PROVIDER = os.getenv("OTP_PROVIDER", "console")
-
