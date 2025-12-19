@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from home.models import EmailOTP
+from home.models import PhoneOTP
 from home.serializers import VerifyOTPSerializer, SignupSerializer
 from home.utils.otp import verify_otp
 
@@ -25,7 +25,7 @@ class SignupView(APIView):
             return Response({"error": "User exists"}, status=400)
 
         User.objects.create(
-            username=data["phone"],
+            username=data["phone"],   # phone = username
             email=data["email"],
             first_name=data["name"],
             password=make_password(data["password"])
@@ -33,7 +33,7 @@ class SignupView(APIView):
 
         return Response(
             {"message": "Signup successful. Verify phone via OTP"},
-            status=201
+            status=status.HTTP_201_CREATED
         )
 
 
@@ -48,8 +48,8 @@ class VerifyPhoneOTP(APIView):
         otp = serializer.validated_data["otp"]
 
         try:
-            record = EmailOTP.objects.get(email=phone)
-        except EmailOTP.DoesNotExist:
+            record = PhoneOTP.objects.get(phone=phone)
+        except PhoneOTP.DoesNotExist:
             return Response({"error": "Invalid OTP"}, status=400)
 
         if record.is_expired():

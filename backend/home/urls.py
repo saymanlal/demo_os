@@ -1,7 +1,8 @@
 from django.urls import path
-
-from home.views.otp import SendPhoneOTP, LoginSendOTP
+from home.views.otp import SendPhoneOTP
+from home.views.login_otp import LoginSendOTP
 from home.views.auth import SignupView, VerifyPhoneOTP
+from home.views.dashboard import DashboardView
 
 urlpatterns = [
     # 🔐 SIGNUP FLOW
@@ -13,4 +14,6 @@ urlpatterns = [
 
     # ✅ VERIFY (COMMON FOR SIGNUP + LOGIN)
     path("auth/verify-otp/", VerifyPhoneOTP.as_view()),
+
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
 ]
