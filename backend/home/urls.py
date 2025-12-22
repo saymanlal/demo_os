@@ -3,6 +3,8 @@ from home.views.otp import SendPhoneOTP
 from home.views.login_otp import LoginSendOTP
 from home.views.auth import SignupView, VerifyPhoneOTP
 from home.views.dashboard import DashboardView
+from home.views.call import start_call
+from home.views.twilio_voice import twilio_voice
 
 urlpatterns = [
     # 🔐 SIGNUP FLOW
@@ -16,4 +18,7 @@ urlpatterns = [
     path("auth/verify-otp/", VerifyPhoneOTP.as_view()),
 
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    
+    path("call/start/", start_call),
+    path("twilio/voice/", twilio_voice),
 ]

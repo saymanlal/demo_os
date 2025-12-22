@@ -33,10 +33,22 @@ INSTALLED_APPS = [
     # third-party
     "rest_framework",
     "corsheaders",
+    "channels",
 
     # local
     "home",
+    
 ]
+
+
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
 
 # =========================
 # MIDDLEWARE
@@ -87,6 +99,7 @@ DATABASES = {
         "PORT": "1433",
         "OPTIONS": {
             "driver": "ODBC Driver 18 for SQL Server",
+            "extra_params": "TrustServerCertificate=yes;",
         },
     }
 }
