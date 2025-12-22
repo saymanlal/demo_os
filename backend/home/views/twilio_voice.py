@@ -8,7 +8,7 @@ def twilio_voice(request):
 
     connect = Connect()
     connect.stream(
-        url="wss://osteitic-eladia-ocreate.ngrok-free.dev/ws/twilio/media/",
+        url="wss://flutiest-dara-repellantly.ngrok-free.dev/ws/twilio/media/",
         track="inbound_track"
     )
 

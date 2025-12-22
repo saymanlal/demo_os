@@ -21,7 +21,7 @@ def start_call(request):
     call = client.calls.create(
         to=to_number,
         from_=os.getenv("TWILIO_PHONE_NUMBER"),
-        url="https://osteitic-eladia-ocreate.ngrok-free.dev/api/twilio/voice/"
+        url="https://flutiest-dara-repellantly.ngrok-free.dev/api/twilio/voice/"
     )
 
     return JsonResponse({
@@ -32,6 +32,6 @@ def start_call(request):
 def twilio_voice(request):
     response = VoiceResponse()
     connect = Connect()
-    connect.stream(url="wss://osteitic-eladia-ocreate.ngrok-free.dev/ws/twilio/stream/")
+    connect.stream(url="wss://flutiest-dara-repellantly.ngrok-free.dev/ws/twilio/stream/")
     response.append(connect)
     return HttpResponse(str(response), content_type="text/xml")
