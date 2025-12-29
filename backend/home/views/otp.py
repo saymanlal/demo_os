@@ -25,11 +25,7 @@ class SendPhoneOTP(APIView):
             otp_hash=hash_otp(otp)
         )
 
-        # 🔥 DEV MODE
-        print("=================================")
-        print("📱 PHONE:", phone)
-        print("🔐 OTP (DEV MODE):", otp)
-        print("=================================")
+       
 
         return Response(
             {"message": "OTP generated (check server console)"},

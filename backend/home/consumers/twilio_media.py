@@ -1,16 +1,29 @@
 import json
 import base64
 import audioop
+import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
+
 from home.services.azure_stt import AzureSpeechStream
+from home.services.ollama_llm import OllamaLLM
+from home.services.azure_tts import AzureTTS
+from home.utils.audio import pcm16k_to_twilio
+
 
 class TwilioMediaConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         await self.accept()
 
         self.call_sid = None
         self.stream_sid = None
-        self.azure_stt = AzureSpeechStream()
+
+        self.llm = OllamaLLM()
+        self.tts = AzureTTS()
+
+        self.azure_stt = AzureSpeechStream(
+            on_final_text=self.on_final_text
+        )
 
         print("🔗 Twilio WebSocket connected")
 
@@ -29,24 +42,58 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         elif event == "media":
             payload = message["media"]["payload"]
 
-            # Decode base64
+            # base64 → μ-law
             mulaw_bytes = base64.b64decode(payload)
 
-            # μ-law → 16-bit PCM @ 8kHz
+            # μ-law → PCM 16-bit 8kHz
             pcm_8k = audioop.ulaw2lin(mulaw_bytes, 2)
 
-            # Resample 8k → 16k
+            # 8kHz → 16kHz
             pcm_16k, _ = audioop.ratecv(
-                pcm_8k, 2, 1, 8000, 16000, None
+                pcm_8k,
+                2,
+                1,
+                8000,
+                16000,
+                None
             )
 
-            # Push to Azure
+            # Send to Azure STT
             self.azure_stt.push_audio(pcm_16k)
 
         elif event == "stop":
             print(f"🛑 Call ended | {self.call_sid}")
             self.azure_stt.close()
             await self.close()
+
+    def on_final_text(self, text: str):
+        print("🧠 USER:", text)
+
+        try:
+            # LLM response
+            reply = self.llm.generate(text)
+            print("🤖 AI:", reply)
+
+            # TTS
+            pcm_audio = self.tts.synthesize(reply)
+
+            # Convert to Twilio format
+            payload = pcm16k_to_twilio(pcm_audio)
+
+            message = {
+                "event": "media",
+                "streamSid": self.stream_sid,
+                "media": {
+                    "payload": payload
+                }
+            }
+
+            asyncio.create_task(
+                self.send(text_data=json.dumps(message))
+            )
+
+        except Exception as e:
+            print("❌ AI RESPONSE ERROR:", e)
 
     async def disconnect(self, close_code):
         print(f"❌ WebSocket disconnected | code={close_code}")
