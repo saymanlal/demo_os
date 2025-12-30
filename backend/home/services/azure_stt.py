@@ -1,8 +1,11 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
 
+
 class AzureSpeechStream:
-    def __init__(self, language="en-US"):
+    def __init__(self, on_final_text, language="en-US"):
+        self.on_final_text = on_final_text
+
         self.speech_key = os.getenv("AZURE_SPEECH_KEY")
         self.region = os.getenv("AZURE_SPEECH_REGION")
 
@@ -35,16 +38,20 @@ class AzureSpeechStream:
         )
 
         self._wire_events()
-
         self.recognizer.start_continuous_recognition()
 
     def _wire_events(self):
         self.recognizer.recognizing.connect(
             lambda evt: print(f"🟡 PARTIAL: {evt.result.text}")
         )
-        self.recognizer.recognized.connect(
-            lambda evt: print(f"🟢 FINAL: {evt.result.text}")
-        )
+
+        def recognized(evt):
+            if evt.result.text:
+                print(f"🟢 FINAL: {evt.result.text}")
+                self.on_final_text(evt.result.text)
+
+        self.recognizer.recognized.connect(recognized)
+
         self.recognizer.session_stopped.connect(
             lambda evt: print("🛑 Azure session stopped")
         )

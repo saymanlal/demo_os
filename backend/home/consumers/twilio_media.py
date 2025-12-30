@@ -18,7 +18,7 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         self.call_sid = None
         self.stream_sid = None
 
-        self.llm = OllamaLLM()
+        self.llm = OllamaLLM(model="phi3")
         self.tts = AzureTTS()
 
         self.azure_stt = AzureSpeechStream(
@@ -42,23 +42,13 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         elif event == "media":
             payload = message["media"]["payload"]
 
-            # base64 → μ-law
             mulaw_bytes = base64.b64decode(payload)
-
-            # μ-law → PCM 16-bit 8kHz
             pcm_8k = audioop.ulaw2lin(mulaw_bytes, 2)
 
-            # 8kHz → 16kHz
             pcm_16k, _ = audioop.ratecv(
-                pcm_8k,
-                2,
-                1,
-                8000,
-                16000,
-                None
+                pcm_8k, 2, 1, 8000, 16000, None
             )
 
-            # Send to Azure STT
             self.azure_stt.push_audio(pcm_16k)
 
         elif event == "stop":
@@ -69,31 +59,28 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
     def on_final_text(self, text: str):
         print("🧠 USER:", text)
 
-        try:
-            # LLM response
-            reply = self.llm.generate(text)
-            print("🤖 AI:", reply)
+        async def stream_ai_response():
+            try:
+                for sentence in self.llm.generate_sentences(text):
+                    print("🤖 AI:", sentence)
 
-            # TTS
-            pcm_audio = self.tts.synthesize(reply)
+                    pcm_audio = self.tts.synthesize(sentence)
+                    payload = pcm16k_to_twilio(pcm_audio)
 
-            # Convert to Twilio format
-            payload = pcm16k_to_twilio(pcm_audio)
+                    message = {
+                        "event": "media",
+                        "streamSid": self.stream_sid,
+                        "media": {
+                            "payload": payload
+                        }
+                    }
 
-            message = {
-                "event": "media",
-                "streamSid": self.stream_sid,
-                "media": {
-                    "payload": payload
-                }
-            }
+                    await self.send(text_data=json.dumps(message))
 
-            asyncio.create_task(
-                self.send(text_data=json.dumps(message))
-            )
+            except Exception as e:
+                print("❌ AI STREAM ERROR:", e)
 
-        except Exception as e:
-            print("❌ AI RESPONSE ERROR:", e)
+        asyncio.create_task(stream_ai_response())
 
     async def disconnect(self, close_code):
         print(f"❌ WebSocket disconnected | code={close_code}")
