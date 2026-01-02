@@ -1,64 +1,62 @@
-import requests
-import json
+import os
 import re
+from google import genai
 
 
 class OllamaLLM:
-    def __init__(self, model="phi3"):
-        self.model = model
-        self.url = "http://127.0.0.1:11434/api/chat"
+    """
+    Streaming, sentence-based Gemini LLM
+    (name kept to avoid refactors)
+    """
+
+    def __init__(self):
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise RuntimeError("GOOGLE_API_KEY not set")
+
+        self.client = genai.Client(api_key=api_key)
+
+        # ⚠️ THIS IS THE KEY FIX
+        self.model = "gemini-1.0-pro"
 
     def generate_sentences(self, prompt: str):
-        payload = {
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a real-time AI voice assistant on a phone call. "
-                        "Reply naturally, clearly, and briefly. "
-                        "Do not ramble."
-                    )
-                },
+        stream = self.client.models.generate_content_stream(
+            model=self.model,
+            contents=[
                 {
                     "role": "user",
-                    "content": prompt
+                    "parts": [
+                        {
+                            "text": (
+                                "You are a real-time AI voice assistant on a phone call. "
+                                "Reply clearly, briefly, and naturally.\n\n"
+                                f"User: {prompt}"
+                            )
+                        }
+                    ],
                 }
             ],
-            "stream": True
-        }
-
-        response = requests.post(
-            self.url,
-            json=payload,
-            stream=True,
-            timeout=60
         )
 
         buffer = ""
 
-        for line in response.iter_lines():
-            if not line:
+        for chunk in stream:
+            if not chunk.text:
                 continue
 
-            data = json.loads(line.decode("utf-8"))
+            buffer += chunk.text
 
-            if "message" in data:
-                token = data["message"].get("content", "")
-                buffer += token
+            # split on sentence boundaries
+            sentences = re.split(r'(?<=[.!?])\s+', buffer)
 
-                # sentence boundary detection
-                sentences = re.split(r'(?<=[.!?])\s+', buffer)
+            for s in sentences[:-1]:
+                s = s.strip()
+                if s:
+                    yield s
 
-                for s in sentences[:-1]:
-                    clean = s.strip()
-                    if clean:
-                        yield clean
+            buffer = sentences[-1]
 
-                buffer = sentences[-1]
-
-            if data.get("done"):
-                final = buffer.strip()
-                if final:
-                    yield final
-                break
+        # flush remaining text
+        final = buffer.strip()
+        if final:
+            yield final
