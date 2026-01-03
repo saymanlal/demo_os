@@ -1,9 +1,11 @@
-import json, os
-from django.http import JsonResponse
+import json
+import os
+
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from twilio.rest import Client
-from django.http import HttpResponse
 from twilio.twiml.voice_response import VoiceResponse, Connect
+
 
 @csrf_exempt
 def start_call(request):
@@ -13,6 +15,10 @@ def start_call(request):
     if not to_number:
         return JsonResponse({"error": "phone required"}, status=400)
 
+    base_url = os.getenv("TWILIO_BASE_URL")
+    if not base_url:
+        return JsonResponse({"error": "TWILIO_BASE_URL missing"}, status=500)
+
     client = Client(
         os.getenv("TWILIO_ACCOUNT_SID"),
         os.getenv("TWILIO_AUTH_TOKEN")
@@ -21,7 +27,7 @@ def start_call(request):
     call = client.calls.create(
         to=to_number,
         from_=os.getenv("TWILIO_PHONE_NUMBER"),
-        url="https://flutiest-dara-repellantly.ngrok-free.dev/api/twilio/voice/"
+        url=f"{base_url}/api/twilio/voice/"
     )
 
     return JsonResponse({
@@ -29,9 +35,18 @@ def start_call(request):
         "sid": call.sid
     })
 
+
 def twilio_voice(request):
+    base_url = os.getenv("TWILIO_BASE_URL")
+    if not base_url:
+        return HttpResponse("TWILIO_BASE_URL missing", status=500)
+
     response = VoiceResponse()
     connect = Connect()
-    connect.stream(url="wss://flutiest-dara-repellantly.ngrok-free.dev/ws/twilio/stream/")
+
+    connect.stream(
+        url=f"{base_url.replace('https://', 'wss://')}/ws/twilio/stream/"
+    )
+
     response.append(connect)
     return HttpResponse(str(response), content_type="text/xml")
