@@ -37,7 +37,7 @@ class GeminiLLM:
         
         # Test connection
         try:
-            print(f"🔗 Testing Groq AI connection...")
+            print(f"🔗 Testing AI connection...")
             test_response = self._make_api_call("Hello", test_mode=True)
             print(f"✅ Groq AI connected successfully!")
             print(f"⚡ Using model: {self.model} (70B parameters, FREE)")
@@ -122,22 +122,20 @@ class GeminiLLM:
         try:
             self.last_call_time = time.time()
             
-            print(f"📤 To Groq AI: '{text[:50]}...'")
-            
             response = self._make_api_call(text)
             
             print(f"✅ Response: '{response[:50]}...'")
             return response
             
         except Exception as e:
-            print(f"❌ Groq AI Error: {e}")
+            print(f"❌ Model Error: {e}")
             
             error_str = str(e)
             # Return user-friendly error messages
             if "429" in error_str:
                 return "I'm receiving too many requests. Please wait a moment."
             elif "401" in error_str or "403" in error_str:
-                return "Authentication issue. Please check API configuration."
+                return "Authentication issue. Please check Model configuration."
             elif "quota" in error_str.lower():
                 return "API limit reached for now. Please try again later."
             else:
