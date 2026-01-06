@@ -1,6 +1,6 @@
 import os
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from twilio.twiml.voice_response import VoiceResponse, Connect
 
 
@@ -13,7 +13,6 @@ def twilio_voice(request):
     response = VoiceResponse()
     connect = Connect()
 
-    # convert HTTPS → WSS automatically
     wss_url = base_url.replace("https://", "wss://") + "/ws/twilio/media/"
 
     connect.stream(
@@ -22,6 +21,6 @@ def twilio_voice(request):
     )
 
     response.append(connect)
-    response.pause(length=600)  # keep the call open for streaming
+    response.pause(length=600)
 
     return HttpResponse(str(response), content_type="text/xml")

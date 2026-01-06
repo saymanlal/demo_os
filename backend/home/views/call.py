@@ -1,52 +1,42 @@
 import json
 import os
-
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from twilio.rest import Client
-from twilio.twiml.voice_response import VoiceResponse, Connect
 
 
 @csrf_exempt
 def start_call(request):
-    body = json.loads(request.body)
-    to_number = body.get("phone")
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
+    to_number = body.get("phone")
     if not to_number:
         return JsonResponse({"error": "phone required"}, status=400)
 
     base_url = os.getenv("TWILIO_BASE_URL")
-    if not base_url:
-        return JsonResponse({"error": "TWILIO_BASE_URL missing"}, status=500)
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_PHONE_NUMBER")
 
-    client = Client(
-        os.getenv("TWILIO_ACCOUNT_SID"),
-        os.getenv("TWILIO_AUTH_TOKEN")
-    )
+    if not all([base_url, account_sid, auth_token, from_number]):
+        return JsonResponse({"error": "Twilio env missing"}, status=500)
 
-    call = client.calls.create(
-        to=to_number,
-        from_=os.getenv("TWILIO_PHONE_NUMBER"),
-        url=f"{base_url}/api/twilio/voice/"
-    )
+    try:
+        client = Client(account_sid, auth_token)
 
-    return JsonResponse({
-        "status": "calling",
-        "sid": call.sid
-    })
+        call = client.calls.create(
+            to=to_number,
+            from_=from_number,
+            url=f"{base_url}/api/twilio/voice/"
+        )
 
+        return JsonResponse({
+            "status": "calling",
+            "sid": call.sid
+        })
 
-def twilio_voice(request):
-    base_url = os.getenv("TWILIO_BASE_URL")
-    if not base_url:
-        return HttpResponse("TWILIO_BASE_URL missing", status=500)
-
-    response = VoiceResponse()
-    connect = Connect()
-
-    connect.stream(
-        url=f"{base_url.replace('https://', 'wss://')}/ws/twilio/stream/"
-    )
-
-    response.append(connect)
-    return HttpResponse(str(response), content_type="text/xml")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
