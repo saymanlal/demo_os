@@ -1,9 +1,9 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
-
+from azure.cognitiveservices.speech import languageconfig
 
 class AzureSpeechStream:
-    def __init__(self, on_final_text, language="en-US"):
+    def __init__(self, on_final_text):
         self.on_final_text = on_final_text
 
         self.speech_key = os.getenv("AZURE_SPEECH_KEY")
@@ -16,7 +16,10 @@ class AzureSpeechStream:
             subscription=self.speech_key,
             region=self.region
         )
-        self.speech_config.speech_recognition_language = language
+
+        self.auto_lang_config = languageconfig.AutoDetectSourceLanguageConfig(
+            languages=["hi-IN", "en-IN", "en-US"]
+        )
 
         self.audio_format = speechsdk.audio.AudioStreamFormat(
             samples_per_second=16000,
@@ -24,17 +27,13 @@ class AzureSpeechStream:
             channels=1
         )
 
-        self.push_stream = speechsdk.audio.PushAudioInputStream(
-            self.audio_format
-        )
-
-        self.audio_config = speechsdk.audio.AudioConfig(
-            stream=self.push_stream
-        )
+        self.push_stream = speechsdk.audio.PushAudioInputStream(self.audio_format)
+        self.audio_config = speechsdk.audio.AudioConfig(stream=self.push_stream)
 
         self.recognizer = speechsdk.SpeechRecognizer(
             speech_config=self.speech_config,
-            audio_config=self.audio_config
+            audio_config=self.audio_config,
+            auto_detect_source_language_config=self.auto_lang_config
         )
 
         self._wire_events()
@@ -52,11 +51,7 @@ class AzureSpeechStream:
 
         self.recognizer.recognized.connect(recognized)
 
-        self.recognizer.session_stopped.connect(
-            lambda evt: print("🛑 Azure session stopped")
-        )
-
-    def push_audio(self, pcm_bytes: bytes):
+    def push_audio(self, pcm_bytes):
         self.push_stream.write(pcm_bytes)
 
     def close(self):
