@@ -3,25 +3,14 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
-# =========================
-# ENV LOAD
-# =========================
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# =========================
-# SECURITY
-# =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
-
 DEBUG = True
-
 ALLOWED_HOSTS = ["*"]
 
-# =========================
-# APPLICATIONS
-# =========================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -30,16 +19,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # third-party
     "rest_framework",
     "corsheaders",
     "channels",
 
-    # local
     "home",
-    
 ]
-
 
 ASGI_APPLICATION = "backend.asgi.application"
 
@@ -49,10 +34,6 @@ CHANNEL_LAYERS = {
     }
 }
 
-
-# =========================
-# MIDDLEWARE
-# =========================
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -66,9 +47,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "backend.urls"
 
-# =========================
-# TEMPLATES
-# =========================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -86,9 +64,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-# =========================
-# DATABASE (AZURE SQL)
-# =========================
 DATABASES = {
     "default": {
         "ENGINE": "mssql",
@@ -104,43 +79,17 @@ DATABASES = {
     }
 }
 
-
-# =========================
-# PASSWORD VALIDATION
-# =========================
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
-
-# =========================
-# INTERNATIONALIZATION
-# =========================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# =========================
-# STATIC FILES
-# =========================
 STATIC_URL = "static/"
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# =========================
-# CORS
-# =========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
 
-# =========================
-# DRF + JWT
-# =========================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -156,17 +105,13 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+
 # =========================
 # TWILIO (SMS OTP)
 # =========================
 
-from dotenv import load_dotenv
-load_dotenv()
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
-
-RUNSERVER_PORT = 2718
-RUNSERVER_ADDR = "127.0.0.1"
