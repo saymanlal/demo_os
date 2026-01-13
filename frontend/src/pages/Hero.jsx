@@ -113,7 +113,7 @@ export default function Hero() {
             <img 
               src={modi} 
               alt="Narendra Modi"
-              className="w-20 h-20 rounded-full object-cover shadow-lg mb-2"
+              className="w-20 h-20 rounded-full object-fill shadow-lg mb-2"
             />
             <div className="text-sm font-semibold text-gray-200">Shri Narendra Modi</div>
             <div className="text-xs text-gray-400">Hon'ble Prime Minister</div>
