@@ -15,12 +15,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
 
-DEBUG = False   # Render SHOULD NOT run debug=True
-
+DEBUG = False       # Render PRODUCTION
 ALLOWED_HOSTS = ["*", ".onrender.com"]
 
 # =========================
-# APPLICATIONS
+# APPS
 # =========================
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -30,20 +29,20 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # third party
+    # 3rd party
     "rest_framework",
     "corsheaders",
     "channels",
 
-    # local apps
-    "backend.home",       # <<<<<<<<<< changed!
+    # your local app (correct path!)
+    "backend.home",
 ]
 
-ASGI_APPLICATION = "backend.backend.asgi.application"   # <<<<<<<<<< changed!
+# =========================
+# ASGI + CHANNELS
+# =========================
+ASGI_APPLICATION = "backend.backend.asgi.application"
 
-# =========================
-# CHANNEL LAYERS (Render)
-# =========================
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -67,7 +66,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "backend.backend.urls"     # <<<<<<<<<< changed
+ROOT_URLCONF = "backend.backend.urls"
 
 # =========================
 # TEMPLATES
@@ -87,10 +86,10 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.backend.wsgi.application" # <<<<<<<<<< changed
+WSGI_APPLICATION = "backend.backend.wsgi.application"
 
 # =========================
-# DATABASE (AZURE SQL)
+# DATABASE
 # =========================
 DATABASES = {
     "default": {
@@ -108,7 +107,7 @@ DATABASES = {
 }
 
 # =========================
-# PASSWORD VALIDATION
+# PASSWORDS
 # =========================
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -161,6 +160,6 @@ SIMPLE_JWT = {
 # TWILIO
 # =========================
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
+TWILIO_AUTH_TOKEN  = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_VERIFY_SID  = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")

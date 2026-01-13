@@ -2,5 +2,5 @@ from django.urls import re_path
 from backend.home.utils.twilio_stream import TwilioMediaConsumer
 
 websocket_urlpatterns = [
-    re_path(r"ws/twilio/stream/$", TwilioMediaConsumer.as_asgi()),
+    re_path(r"ws/twilio/stream/?$", TwilioMediaConsumer.as_asgi()),
 ]
