@@ -15,9 +15,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
 
-DEBUG = True
+DEBUG = False   # Render SHOULD NOT run debug=True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*", ".onrender.com"]
 
 # =========================
 # APPLICATIONS
@@ -30,25 +30,28 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # third-party
+    # third party
     "rest_framework",
     "corsheaders",
     "channels",
 
-    # local
+    # local apps
     "home",
-    
 ]
-
 
 ASGI_APPLICATION = "backend.asgi.application"
 
+# =========================
+# CHANNEL LAYERS (Render)
+# =========================
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv("REDIS_URL")]
+        }
     }
 }
-
 
 # =========================
 # MIDDLEWARE
@@ -104,7 +107,6 @@ DATABASES = {
     }
 }
 
-
 # =========================
 # PASSWORD VALIDATION
 # =========================
@@ -126,16 +128,15 @@ USE_TZ = True
 # =========================
 # STATIC FILES
 # =========================
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================
 # CORS
 # =========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # =========================
@@ -157,14 +158,9 @@ SIMPLE_JWT = {
 }
 
 # =========================
-# TWILIO (SMS OTP)
+# TWILIO
 # =========================
-
-from dotenv import load_dotenv
-load_dotenv()
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
-
-
