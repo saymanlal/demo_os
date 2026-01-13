@@ -6,10 +6,10 @@ from rest_framework.permissions import AllowAny   # ✅ IMPORTANT
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
-from home.models import PhoneOTP
-from home.serializers import SendOTPSerializer, VerifyOTPSerializer
-from home.utils.otp import generate_otp, hash_otp, verify_otp
-from home.utils.otp_sender import send_otp
+from backend.home.models import PhoneOTP
+from backend.home.serializers import SendOTPSerializer, VerifyOTPSerializer
+from backend.home.utils.otp import generate_otp, hash_otp, verify_otp
+from backend.home.utils.otp_sender import send_otp
 
 MAX_ATTEMPTS = 5
 

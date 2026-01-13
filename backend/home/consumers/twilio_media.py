@@ -4,9 +4,9 @@ import audioop
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from home.services.azure_stt import AzureSpeechStream
-from home.services.azure_tts import AzureTTS
-from home.services.gemini_llm import GeminiLLM
+from backend.home.services.azure_stt import AzureSpeechStream
+from backend.home.services.azure_tts import AzureTTS
+from backend.home.services.gemini_llm import GeminiLLM
 
 
 class TwilioMediaConsumer(AsyncWebsocketConsumer):

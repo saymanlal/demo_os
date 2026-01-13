@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.utils.timezone import localtime
-from home.models import PhoneOTP
+from backend.home.models import PhoneOTP
 
 
 class DashboardView(APIView):

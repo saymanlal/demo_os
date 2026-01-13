@@ -1,4 +1,4 @@
-from home.utils.twilio_otp import send_sms_otp
+from backend.home.utils.twilio_otp import send_sms_otp
 
 def send_otp(phone, otp):
     # single source of truth for OTP sending

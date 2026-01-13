@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from home.models import PhoneOTP
-from home.serializers import SendOTPSerializer
-from home.utils.otp import generate_otp, hash_otp
+from backend.home.models import PhoneOTP
+from backend.home.serializers import SendOTPSerializer
+from backend.home.utils.otp import generate_otp, hash_otp
 
 
 class SendPhoneOTP(APIView):

@@ -1,14 +1,14 @@
 from django.urls import path
-from home.views.otp import SendPhoneOTP
-from home.views.login_otp import LoginSendOTP
-from home.views.auth import SignupView, VerifyPhoneOTP
-from home.views.dashboard import DashboardView
-from home.views.call import start_call
+from backend.home.views.otp import SendPhoneOTP
+from backend.home.views.login_otp import LoginSendOTP
+from backend.home.views.auth import SignupView, VerifyPhoneOTP
+from backend.home.views.dashboard import DashboardView
+from backend.home.views.call import start_call
 
 
 
-from home.views.twilio_voice import twilio_voice
-from home.views.forgot_password import (
+from backend.home.views.twilio_voice import twilio_voice
+from backend.home.views.forgot_password import (
     ForgotPasswordSendOTP,
     VerifyForgotPasswordOTP,
     ResetPassword

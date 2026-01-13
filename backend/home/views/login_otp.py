@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
-from home.utils.twilio_otp import send_sms_otp
-from home.utils.otp import generate_otp, hash_otp
-from home.models import PhoneOTP
+from backend.home.utils.twilio_otp import send_sms_otp
+from backend.home.utils.otp import generate_otp, hash_otp
+from backend.home.models import PhoneOTP
 
 User = get_user_model()
 

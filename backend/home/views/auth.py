@@ -6,9 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from home.models import PhoneOTP
-from home.serializers import VerifyOTPSerializer, SignupSerializer
-from home.utils.otp import verify_otp
+from backend.home.models import PhoneOTP
+from backend.home.serializers import VerifyOTPSerializer, SignupSerializer
+from backend.home.utils.otp import verify_otp
 
 MAX_ATTEMPTS = 5
 
