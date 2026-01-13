@@ -1,19 +1,36 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-
+/**
+ * Single axios instance for entire app
+ * Production-ready: token persist + auto attach
+ */
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api",
+  timeout: 15000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-export function setAuthToken(token) {
+/**
+ * Set / remove auth token globally
+ */
+export const setAuthToken = (token) => {
   if (token) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    localStorage.setItem("accessToken", token);
+    localStorage.setItem("access_token", token);
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
   } else {
-    delete api.defaults.headers.common["Authorization"];
-    localStorage.removeItem("accessToken");
+    localStorage.removeItem("access_token");
+    delete api.defaults.headers.common.Authorization;
   }
+};
+
+/**
+ * Restore token on page refresh
+ */
+const existingToken = localStorage.getItem("access_token");
+if (existingToken) {
+  api.defaults.headers.common.Authorization = `Bearer ${existingToken}`;
 }
 
 export default api;
