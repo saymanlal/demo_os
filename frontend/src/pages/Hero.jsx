@@ -76,16 +76,16 @@ export default function Hero() {
         </div>
 
         {/* Titles */}
-        <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4 text-gray-900">
+        <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4 text-gray-100">
           मध्य प्रदेश <span className="text-orange-600">AI</span> पोर्टल
         </h1>
-        <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-800">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-400">
           Empowering Citizens with{" "}
           <span className="text-green-600">Artificial Intelligence</span>
         </h2>
 
         {/* Description */}
-        <p className="text-lg text-gray-700 mb-8 max-w-xl">
+        <p className="text-lg text-gray-500 mb-8 max-w-xl">
           Bridging technology and governance through intelligent AI agents.
           Get instant access to government services, information, and support 
           in your preferred language.
@@ -93,7 +93,7 @@ export default function Hero() {
 
         {/* Features */}
         <div className="mb-12">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Key Features:</h3>
+          <h3 className="text-xl font-semibold mb-4 text-gray-400">Key Features:</h3>
           <div className="flex flex-wrap gap-4">
             <span className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
               🇮🇳 24/7 Hindi & English Support
@@ -115,8 +115,8 @@ export default function Hero() {
               alt="Narendra Modi"
               className="w-20 h-20 rounded-full object-cover shadow-lg mb-2"
             />
-            <div className="text-sm font-semibold text-gray-800">Shri Narendra Modi</div>
-            <div className="text-xs text-gray-600">Hon'ble Prime Minister</div>
+            <div className="text-sm font-semibold text-gray-200">Shri Narendra Modi</div>
+            <div className="text-xs text-gray-400">Hon'ble Prime Minister</div>
           </div>
 
           <div className="text-center">
@@ -125,8 +125,8 @@ export default function Hero() {
               alt="Mohan Yadav"
               className="w-20 h-20 rounded-full object-cover shadow-lg mb-2"
             />
-            <div className="text-sm font-semibold text-gray-800">Shri Mohan Yadav</div>
-            <div className="text-xs text-gray-600">Hon'ble Chief Minister</div>
+            <div className="text-sm font-semibold text-gray-200">Shri Mohan Yadav</div>
+            <div className="text-xs text-gray-400">Hon'ble Chief Minister</div>
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export default function Hero() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-100 to-green-100 flex items-center justify-center mb-3 mx-auto shadow-sm">
                 <s.icon className="w-6 h-6 text-gray-700" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">{s.value}</div>
+              <div className="text-2xl font-bold text-gray-300">{s.value}</div>
               <div className="text-xs text-gray-600 font-medium">{s.label}</div>
             </div>
           ))}
