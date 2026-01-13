@@ -5,7 +5,7 @@ import axios from "axios";
  * Production-ready: token persist + auto attach
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://web-prodution-62a2b1.up.railway.app/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://web-production-62a2b1.up.railway.app/api",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
