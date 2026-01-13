@@ -3,20 +3,26 @@ import azure.cognitiveservices.speech as speechsdk
 
 
 class AzureTTS:
-    def __init__(self, voice="en-US-JennyNeural"):
+    def __init__(self):
         self.speech_config = speechsdk.SpeechConfig(
             subscription=os.getenv("AZURE_SPEECH_KEY"),
             region=os.getenv("AZURE_SPEECH_REGION")
         )
-        self.speech_config.speech_synthesis_voice_name = voice
 
-        # IMPORTANT: raw PCM output
+        # PCM output for Twilio
         self.speech_config.set_speech_synthesis_output_format(
             speechsdk.SpeechSynthesisOutputFormat.Raw16Khz16BitMonoPcm
         )
 
     def synthesize(self, text: str) -> bytes:
-        # No AudioConfig needed
+        # 🔥 AUTO voice switch
+        if any("\u0900" <= ch <= "\u097F" for ch in text):
+            # If Hindi characters → Aarti voice
+            self.speech_config.speech_synthesis_voice_name = "hi-IN-AartiNeural"
+        else:
+            # Hinglish → Indian English
+            self.speech_config.speech_synthesis_voice_name = "en-IN-NeerjaNeural"
+
         synthesizer = speechsdk.SpeechSynthesizer(
             speech_config=self.speech_config,
             audio_config=None
