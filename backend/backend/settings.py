@@ -7,10 +7,20 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# =========================
+# CORE
+# =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
 
+DEBUG = False  # IMPORTANT: production
+
+ALLOWED_HOSTS = [
+    "web-production-62a2b1.up.railway.app",
+]
+
+# =========================
+# APPS
+# =========================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -24,9 +34,11 @@ INSTALLED_APPS = [
     "channels",
 
     "home",
-    
 ]
 
+# =========================
+# ASGI / CHANNELS
+# =========================
 ASGI_APPLICATION = "backend.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -34,25 +46,19 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
-
-ASGI_APPLICATION = "backend.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
-
 
 # =========================
 # MIDDLEWARE
 # =========================
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",   # MUST BE FIRST
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+
+    # ❌ CSRF REMOVED (API-only backend)
+    # "django.middleware.csrf.CsrfViewMiddleware",
+
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -98,15 +104,53 @@ DATABASES = {
     }
 }
 
+# =========================
+# AUTH / DRF
+# =========================
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 # =========================
-# PASSWORD VALIDATION
+# CORS (THIS FIXES YOUR BUG)
 # =========================
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://demo-os-two.vercel.app",
+    "https://aiofficeos.vercel.app",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "x-requested-with",
 ]
 
 # =========================
@@ -117,44 +161,16 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# =========================
+# STATIC
+# =========================
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================
-# CORS
+# TWILIO
 # =========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://demo-os-two.vercel.app",
-    "https://aiofficeos.vercel.app"
-]
-CORS_ALLOW_CREDENTIALS = True
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
-}
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-
-# =========================
-# TWILIO (SMS OTP)
-# =========================
-
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
-
-
-RUNSERVER_PORT = 2718
-RUNSERVER_ADDR = "127.0.0.1"
