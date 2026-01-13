@@ -49,7 +49,7 @@ export default function Navbar() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
-              AiHouseOS
+              AiOfficeOS
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               AI Calling Platform

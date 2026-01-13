@@ -2,6 +2,7 @@ import os
 import azure.cognitiveservices.speech as speechsdk
 from azure.cognitiveservices.speech import languageconfig
 
+
 class AzureSpeechStream:
     def __init__(self, on_final_text):
         self.on_final_text = on_final_text
@@ -12,24 +13,33 @@ class AzureSpeechStream:
         if not self.speech_key or not self.region:
             raise RuntimeError("Azure Speech credentials missing")
 
+        # 🔹 Speech config
         self.speech_config = speechsdk.SpeechConfig(
             subscription=self.speech_key,
             region=self.region
         )
 
+        # 🔥 Auto language detect (Hindi + Hinglish + English)
         self.auto_lang_config = languageconfig.AutoDetectSourceLanguageConfig(
             languages=["hi-IN", "en-IN", "en-US"]
         )
 
+        # 🔹 Audio format (Twilio → Azure STT compatible)
         self.audio_format = speechsdk.audio.AudioStreamFormat(
             samples_per_second=16000,
             bits_per_sample=16,
             channels=1
         )
 
-        self.push_stream = speechsdk.audio.PushAudioInputStream(self.audio_format)
-        self.audio_config = speechsdk.audio.AudioConfig(stream=self.push_stream)
+        self.push_stream = speechsdk.audio.PushAudioInputStream(
+            self.audio_format
+        )
 
+        self.audio_config = speechsdk.audio.AudioConfig(
+            stream=self.push_stream
+        )
+
+        # 🔥 IMPORTANT: auto_detect_source_language_config
         self.recognizer = speechsdk.SpeechRecognizer(
             speech_config=self.speech_config,
             audio_config=self.audio_config,
@@ -40,10 +50,13 @@ class AzureSpeechStream:
         self.recognizer.start_continuous_recognition()
 
     def _wire_events(self):
+
+        # Partial (live words)
         self.recognizer.recognizing.connect(
             lambda evt: print(f"🟡 PARTIAL: {evt.result.text}")
         )
 
+        # Final recognized text
         def recognized(evt):
             if evt.result.text:
                 print(f"🟢 FINAL: {evt.result.text}")
@@ -51,7 +64,11 @@ class AzureSpeechStream:
 
         self.recognizer.recognized.connect(recognized)
 
-    def push_audio(self, pcm_bytes):
+        self.recognizer.session_stopped.connect(
+            lambda evt: print("🛑 Azure session stopped")
+        )
+
+    def push_audio(self, pcm_bytes: bytes):
         self.push_stream.write(pcm_bytes)
 
     def close(self):
