@@ -162,7 +162,7 @@ export default function PhoneDemo() {
       console.log("Calling number:", phoneNumberToCall);
 
       // Make POST request to your API with proper JSON content
-      const response = await fetch('http://127.0.0.1:8000/api/call/start/', {
+      const response = await fetch('https://web-production-62a2b1.up.railway.app/api/call/start/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +240,7 @@ export default function PhoneDemo() {
         phoneNumberToCall = `+91${cleanNumber}`;
       }
 
-      await fetch('http://127.0.0.1:8000/api/call/end/', {
+      await fetch('https://web-prodution-62a2b1.up.railway.app/api/call/end/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
