@@ -240,7 +240,7 @@ export default function PhoneDemo() {
         phoneNumberToCall = `+91${cleanNumber}`;
       }
 
-      await fetch('https://web-prodution-62a2b1.up.railway.app/api/call/end/', {
+      await fetch('https://web-production-62a2b1.up.railway.app/api/call/end/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
