@@ -10,15 +10,16 @@ from twilio.rest import Client
 @require_http_methods(["POST", "OPTIONS"])
 def start_call(request):
 
-    # ✅ Handle CORS preflight explicitly
+    # ✅ CORS PREFLIGHT
     if request.method == "OPTIONS":
         response = HttpResponse(status=200)
         response["Access-Control-Allow-Origin"] = "https://aiofficeos.vercel.app"
         response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response["Access-Control-Allow-Credentials"] = "true"
         return response
 
-    # ✅ POST logic starts here
+    # ✅ POST
     try:
         body = json.loads(request.body.decode("utf-8"))
     except Exception:
@@ -51,6 +52,7 @@ def start_call(request):
         })
 
         response["Access-Control-Allow-Origin"] = "https://aiofficeos.vercel.app"
+        response["Access-Control-Allow-Credentials"] = "true"
         return response
 
     except Exception as e:
