@@ -1,13 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Hero from "./pages/Hero";
 import SecondSection from "./pages/SecondSection";
-import Footer from "../src/components/Footer";
-import Navbar from "../src/components/Navbar";
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
 import { useTheme } from "./context/ThemeContext";
 
+
+
 export default function App() {
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
   const { darkMode } = useTheme();
+
+  // 🔥 popup state
+  const [talkOpen, setTalkOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -19,7 +24,7 @@ export default function App() {
       {/* NAVBAR */}
       <Navbar />
 
-      {/* HERO SECTION - padding top equal to navbar height to avoid overlap */}
+      {/* HERO SECTION */}
       <div className="pt-[44px]">
         <Hero mounted={mounted} />
       </div>
@@ -30,6 +35,9 @@ export default function App() {
       {/* FOOTER */}
       <Footer />
 
+      {/* 🔥 FLOATING TALK BUTTON */}
+    
+      {/* STYLES */}
       <style jsx>{`
         @keyframes bounce-subtle {
           0%, 100% { transform: translateY(0); }

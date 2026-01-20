@@ -19,24 +19,21 @@ def start_call(request):
     base_url = os.getenv("TWILIO_BASE_URL")
     account_sid = os.getenv("TWILIO_ACCOUNT_SID")
     auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-    from_number = +13203473406
+    from_number = os.getenv("TWILIO_PHONE_NUMBER")
 
     if not all([base_url, account_sid, auth_token, from_number]):
         return JsonResponse({"error": "Twilio env missing"}, status=500)
 
-    try:
-        client = Client(account_sid, auth_token)
+    client = Client(account_sid, auth_token)
 
-        call = client.calls.create(
-            to=to_number,
-            from_=from_number,
-            url=f"{base_url}/api/twilio/voice/"
-        )
+    call = client.calls.create(
+        to=to_number,
+        from_=from_number,
+        url=f"{base_url}/api/twilio/voice/",
+        method="POST"
+    )
 
-        return JsonResponse({
-            "status": "calling",
-            "sid": call.sid
-        })
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({
+        "status": "calling",
+        "sid": call.sid
+    })
