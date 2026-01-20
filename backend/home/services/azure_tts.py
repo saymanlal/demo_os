@@ -33,4 +33,4 @@ class AzureTTS:
         if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
             raise RuntimeError("Azure TTS failed")
 
-        return result.audio_data
+        return result.audio_data  # ✅ PCM 16kHz bytes

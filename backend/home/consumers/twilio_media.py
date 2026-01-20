@@ -157,4 +157,3 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         self.call_active = False
         if hasattr(self, "azure_stt"):
             self.azure_stt.close()
-

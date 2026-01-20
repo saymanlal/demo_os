@@ -1,12 +1,25 @@
 import json
 import os
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from twilio.rest import Client
 
 
 @csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
 def start_call(request):
+
+    # ✅ CORS PREFLIGHT
+    if request.method == "OPTIONS":
+        response = HttpResponse(status=200)
+        response["Access-Control-Allow-Origin"] = "https://aiofficeos.vercel.app"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+    # ✅ POST
     try:
         body = json.loads(request.body.decode("utf-8"))
     except Exception:
@@ -33,10 +46,14 @@ def start_call(request):
             url=f"{base_url}/api/twilio/voice/"
         )
 
-        return JsonResponse({
+        response = JsonResponse({
             "status": "calling",
             "sid": call.sid
         })
+
+        response["Access-Control-Allow-Origin"] = "https://aiofficeos.vercel.app"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
