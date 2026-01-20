@@ -7,22 +7,21 @@ from twilio.twiml.voice_response import VoiceResponse, Connect
 @csrf_exempt
 def twilio_voice(request):
     base_url = os.getenv("TWILIO_BASE_URL")
+    if not base_url:
+        return HttpResponse("TWILIO_BASE_URL missing", status=500)
 
-    vr = VoiceResponse()
-
-    vr.say(
-        "Namaskar. Madhya Pradesh Vidyut Vibhag helpline mein aapka swagat hai. "
-        "Kripya apni bijli sambandhit samasya batayein.",
-        language="hi-IN",
-        voice="alice"
-    )
-
+    response = VoiceResponse()
     connect = Connect()
+
+    wss_url = base_url.replace("https://", "wss://") + "/ws/twilio/media/"
+
     connect.stream(
-        url=base_url.replace("https://", "wss://") + "/ws/twilio/media/"
+        url=wss_url,
+        track="inbound_track"
     )
 
-    vr.append(connect)
-    vr.pause(length=600)
+    response.append(connect)
+    response.pause(length=600)
 
-    return HttpResponse(str(vr), content_type="text/xml")
+    return HttpResponse(str(response), content_type="text/xml")
+
