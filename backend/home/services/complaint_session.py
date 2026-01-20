@@ -1,5 +1,5 @@
-import uuid
-from .complaint_states import ComplaintState
+import time
+from home.models import Complaint
 
 
 class ComplaintSession:
@@ -7,17 +7,47 @@ class ComplaintSession:
         self.state = ComplaintState.ASK_DESCRIPTION
         self.data = {}
         self.caller_number = caller_number
-        self.call_sid = None
+        self.step = 1
+        self.is_completed = False
+
+        # 🔒 NEW: confirmation lock
+        self.confirmation_locked = False
+        self.confirmation_time = None
+
+        self.data = {
+            "category": "Electricity",
+            "description": None,
+            "location": None,
+        }
 
     def handle_input(self, text: str):
-        text = text.lower()
 
-        if self.state == ComplaintState.ASK_DESCRIPTION:
+        # 🔒 HARD STOP after completion
+        if self.is_completed:
+            return None, True
+
+        # 🔒 Ignore inputs during debounce window (2 sec)
+        if self.confirmation_locked:
+            if time.time() - self.confirmation_time < 2.0:
+                return None, False
+            else:
+                self.confirmation_locked = False
+
+        text = text.strip()
+        lower = text.lower()
+
+        # STEP 1
+        if self.step == 1:
             self.data["description"] = text
-            self.state = ComplaintState.ASK_LOCATION
-            return "Kripya apna shetra ya gaon batayein.", False
+            self.step = 2
+            return (
+                "Dhanyavaad. Kripya us jagah ka naam batayein "
+                "jahan yeh samasya hai.",
+                False
+            )
 
-        if self.state == ComplaintState.ASK_LOCATION:
+        # STEP 2
+        if self.step == 2:
             self.data["location"] = text
             self.state = ComplaintState.CONFIRM
             return (
@@ -26,24 +56,48 @@ class ComplaintSession:
                 False
             )
 
-        if self.state == ComplaintState.CONFIRM:
-            if "haan" in text or "yes" in text:
-                self.state = ComplaintState.REGISTER
-                return self._register(), True
-            else:
-                self.state = ComplaintState.DONE
-                return "Theek hai. Dhanyavaad.", True
+        # STEP 3 — CONFIRMATION (🔥 FIXED)
+        if self.step == 3:
+            # 🔒 lock immediately on first yes/no
+            if (
+                "ह" in text or
+                "haan" in lower or
+                "han" in lower or
+                "yes" in lower
+            ):
+                self.confirmation_locked = True
+                self.confirmation_time = time.time()
+                return self._register()
 
-        return "Dhanyavaad.", True
+            if (
+                "न" in text or
+                "nahi" in lower or
+                "no" in lower
+            ):
+                self.confirmation_locked = True
+                self.confirmation_time = time.time()
+                self.step = 1
+                return (
+                    "Theek hai. Kripya apni samasya dobara batayein.",
+                    False
+                )
+
+            return "Kripya sirf Haan ya Nahi mein uttar dein.", False
+
+        return None, True
 
     def _register(self):
-        complaint_id = f"MPBV-{uuid.uuid4().hex[:8].upper()}"
-        self.data["complaint_id"] = complaint_id
+        complaint = Complaint.objects.create(
+            caller_number=self.caller_number,
+            category=self.data["category"],
+            description=self.data["description"],
+            location=self.data["location"],
+        )
 
-        print("✅ COMPLAINT REGISTERED:", self.data)
 
         return (
-            f"Aapki complaint safaltapoorvak darj kar li gayi hai. "
-            f"Aapka complaint number hai {complaint_id}. "
-            "Dhanyavaad."
+            f"Aapki shikayat safalta se darj kar li gayi hai. "
+            f"Aapka complaint number hai {complaint.complaint_id}. "
+            f"Kripya ise surakshit rakhein. Aap call kaat sakte hain.",
+            True
         )
