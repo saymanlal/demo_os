@@ -20,7 +20,7 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         self.loop = asyncio.get_event_loop()
         self.call_active = True
 
-        # 🔒 Barge-in control
+        # 🔒 Agent speaking flag
         self.is_agent_speaking = False
 
         self.tts = AzureTTS()
@@ -36,10 +36,15 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         print("✅ Azure STT + Azure TTS + ComplaintSession initialized")
 
     # -----------------------------
-    # STT CALLBACK
+    # STT CALLBACK (THREAD SAFE)
     # -----------------------------
     def sync_final_text_callback(self, text: str):
-        if not self.call_active or self.is_agent_speaking:
+        # 🔒 Ignore STT if call ended OR agent speaking OR complaint done
+        if (
+            not self.call_active or
+            self.is_agent_speaking or
+            self.complaint_session.is_completed
+        ):
             return
 
         asyncio.run_coroutine_threadsafe(
@@ -56,32 +61,30 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
 
         print(f"📝 USER SAID: {text}")
 
-        response_text, should_end = self.complaint_session.handle_input(text)
+        response_text,should_end = self.complaint_session.handle_input(text)
+
+        # 🔒 Ignore debounce / noise
+        if not response_text:
+            return
+
         print(f"🏛️ RESPONSE: {response_text}")
 
         await self.speak(response_text)
 
-        if should_end:
-            await self.end_call()
-
     # -----------------------------
-    # SAFE SPEAK (CRITICAL FIX)
+    # SPEAK (SAFE)
     # -----------------------------
     async def speak(self, text: str):
-        # ❗ DO NOT speak before streamSid exists
         if not self.call_active or not self.stream_sid:
-            print("⚠️ speak() skipped — streamSid not ready")
             return
 
         self.is_agent_speaking = True
 
         pcm_16k = self.tts.synthesize(text)
-
         pcm_8k, _ = audioop.ratecv(
             pcm_16k, 2, 1, 16000, 8000, None
         )
         mulaw = audioop.lin2ulaw(pcm_8k, 2)
-
         payload = base64.b64encode(mulaw).decode("utf-8")
 
         await self.send(text_data=json.dumps({
@@ -92,7 +95,9 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
 
         print(f"🔊 SPOKE: {text}")
 
+        # ⏳ Wait for speech duration
         await asyncio.sleep(max(1.0, len(text) * 0.05))
+
         self.is_agent_speaking = False
 
     # -----------------------------
@@ -114,14 +119,17 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
 
             print(f"📞 Call started | {self.call_sid}")
 
-            # ✅ GREETING ONLY AFTER START
             await self.speak(
                 "Namaskar. Madhya Pradesh Vidyut Vibhag helpline mein aapka swagat hai. "
                 "Kripya apni bijli sambandhit samasya batayein."
             )
 
         elif event == "media":
-            if self.is_agent_speaking:
+            # 🔒 Drop audio after completion or during agent speech
+            if (
+                self.is_agent_speaking or
+                self.complaint_session.is_completed
+            ):
                 return
 
             payload = message["media"]["payload"]
@@ -157,4 +165,3 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         self.call_active = False
         if hasattr(self, "azure_stt"):
             self.azure_stt.close()
-
