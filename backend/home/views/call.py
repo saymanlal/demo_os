@@ -32,7 +32,7 @@ def start_call(request):
     base_url = os.getenv("TWILIO_BASE_URL")
     account_sid = os.getenv("TWILIO_ACCOUNT_SID")
     auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-    from_number = +13203473406
+    from_number = os.getenv("TWILIO_PHONE_NUMBER")
 
     if not all([base_url, account_sid, auth_token, from_number]):
         return JsonResponse({"error": "Twilio env missing"}, status=500)
