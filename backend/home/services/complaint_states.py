@@ -1,3 +1,4 @@
+# ~/demo_os/backend/home/services/complaint_states.py
 from enum import Enum
 
 class ComplaintState(Enum):
@@ -7,6 +8,6 @@ class ComplaintState(Enum):
     ASK_LOCATION = 4
     CONFIRM_NEW = 5
     ASK_EXISTING_ID = 6
-    READ_EXISTING = 7
-    ASK_CLOSE = 8
+    ASK_CLOSE = 7  # ADDED: For asking if user wants to close existing complaint
+    ASK_MORE_PROBLEMS = 8
     DONE = 9
