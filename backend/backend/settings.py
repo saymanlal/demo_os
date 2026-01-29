@@ -1,3 +1,7 @@
+"""
+Django settings for backend project.
+"""
+
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -12,11 +16,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
 
-DEBUG = False  # IMPORTANT: production
+DEBUG = True  # TEMPORARILY TRUE FOR DEBUGGING
 
-ALLOWED_HOSTS = [
-    "web-production-62a2b1.up.railway.app",
-]
+ALLOWED_HOSTS = ['*']  # TEMPORARY - allow all for testing
+
+# =========================
+# URL SETTINGS
+# =========================
+APPEND_SLASH = False  # FIX: Prevents 301 redirects
 
 # =========================
 # APPS
@@ -51,14 +58,11 @@ CHANNEL_LAYERS = {
 # MIDDLEWARE
 # =========================
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   # MUST BE FIRST
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-
-    # ❌ CSRF REMOVED (API-only backend)
-    # "django.middleware.csrf.CsrfViewMiddleware",
-
+    # "django.middleware.csrf.CsrfViewMiddleware",  # DISABLED FOR API
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -91,17 +95,21 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # =========================
 DATABASES = {
     "default": {
-        "ENGINE": "mssql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": "1433",
-        "OPTIONS": {
-            "driver": "ODBC Driver 18 for SQL Server",
-            "extra_params": "TrustServerCertificate=yes;",
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
+    # "default": {
+    #     "ENGINE": "mssql",
+    #     "NAME": os.getenv("DB_NAME"),
+    #     "USER": os.getenv("DB_USER"),
+    #     "PASSWORD": os.getenv("DB_PASSWORD"),
+    #     "HOST": os.getenv("DB_HOST"),
+    #     "PORT": "1433",
+    #     "OPTIONS": {
+    #         "driver": "ODBC Driver 18 for SQL Server",
+    #         "extra_params": "TrustServerCertificate=yes;",
+    #     },
+    # }
 }
 
 # =========================
@@ -112,7 +120,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",  # TEMPORARY
     ),
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
@@ -126,31 +134,16 @@ SIMPLE_JWT = {
 }
 
 # =========================
-# CORS (THIS FIXES YOUR BUG)
+# CORS (FIXED)
 # =========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://demo-os-two.vercel.app",
-    "https://aiofficeos.vercel.app",
-]
-
+CORS_ALLOW_ALL_ORIGINS = True  # TEMPORARY FOR TESTING
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_METHODS = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-]
-
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "authorization",
-    "content-type",
-    "origin",
-    "x-requested-with",
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://demo-os-two.vercel.app",
+    "https://aiofficeos.vercel.app",
 ]
 
 # =========================
@@ -165,6 +158,7 @@ USE_TZ = True
 # STATIC
 # =========================
 STATIC_URL = "static/"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================
@@ -174,3 +168,8 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+
+# =========================
+# GROQ AI
+# =========================
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
