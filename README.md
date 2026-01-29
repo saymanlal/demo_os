@@ -1,85 +1,98 @@
-```md
-# AIOfficeOS — Full Setup & Execution Documentation
+# AIOfficeOS
+### Full-System Technical Documentation
 
-Demo OS is a full-stack, web-based operating-system style application built with a **Django ASGI backend**, **modern frontend**, and **ngrok-based public tunneling** for development and testing.
+AIOfficeOS is a full-stack, web-based operating-system–style platform that simulates a desktop-like environment inside the browser.  
+The system is architected using a **Django ASGI backend**, a **modern Node-based frontend**, and **ngrok-powered tunneling** for development-time public access.
 
-This document explains the **complete setup**, **multi-terminal execution**, and **why each command exists** — no assumptions, no missing steps.
-
----
-
-## Table of Contents
-
-1. Project Overview  
-2. System Architecture  
-3. Technology Stack  
-4. Prerequisites  
-5. Project Setup  
-6. Running the Application (Multi-Terminal)  
-7. Ngrok Configuration  
-8. Frontend Execution  
-9. Folder Structure  
-10. Common Mistakes & Fixes  
-11. Future Improvements  
-12. Maintainer  
+This document is the **single source of truth** for understanding, running, and extending the system.
 
 ---
 
-## 1. Project Overview
+## Documentation Index
 
-Demo OS simulates an **OS-like environment inside the browser**, powered by:
-
-- Django ASGI backend (for HTTP + real-time capability)
-- Frontend dev server (Node-based)
-- Ngrok for public exposure of local backend
-
-This is a **real system architecture**, not a UI-only demo.
+- [1. System Overview](#1-system-overview)
+- [2. Architectural Design](#2-architectural-design)
+- [3. Technology Stack](#3-technology-stack)
+- [4. Development Environment Requirements](#4-development-environment-requirements)
+- [5. Repository Structure](#5-repository-structure)
+- [6. Installation & Dependency Setup](#6-installation--dependency-setup)
+- [7. Runtime Execution Model](#7-runtime-execution-model)
+- [8. Multi-Terminal Workflow (Critical)](#8-multi-terminal-workflow-critical)
+- [9. Backend Server Configuration](#9-backend-server-configuration)
+- [10. Ngrok Tunneling Strategy](#10-ngrok-tunneling-strategy)
+- [11. Frontend Configuration & Execution](#11-frontend-configuration--execution)
+- [12. Environment Variable Management](#12-environment-variable-management)
+- [13. Operational Constraints & Design Decisions](#13-operational-constraints--design-decisions)
+- [14. Troubleshooting & Diagnostics](#14-troubleshooting--diagnostics)
+- [15. System Roadmap](#15-system-roadmap)
+- [16. Maintainers](#16-maintainers)
 
 ---
 
-## 2. System Architecture
+## 1. System Overview
+
+AIOfficeOS emulates an operating-system-like workflow inside a web browser.  
+Rather than focusing on UI alone, the project demonstrates **process isolation**, **API-driven coordination**, and **asynchronous backend execution**.
+
+Core characteristics:
+
+- Distributed local runtime
+- Independent long-running processes
+- ASGI-first backend design
+- Explicit separation of concerns
+
+This is an engineering system, not a mock UI.
+
+---
+
+## 2. Architectural Design
+
+### High-Level Request Flow
 
 ```
 
 Browser (User)
 ↓
-Frontend Dev Server (npm)
-↓ API Calls
-Ngrok Public URL
+Frontend Dev Server (Node.js)
+↓ HTTPS API Requests
+Ngrok Secure Tunnel
 ↓
 Django ASGI Backend (Daphne)
 
 ````
 
-Key idea:
-- Frontend talks ONLY to backend
-- Ngrok exposes backend publicly
-- Backend runs independently
+### Design Principles
+
+- Frontend never directly accesses localhost backend
+- Backend remains frontend-agnostic
+- Ngrok is the single ingress point during development
+- Each layer can fail or restart independently without cascading crashes
 
 ---
 
 ## 3. Technology Stack
 
 ### Backend
-- Python
+- Python 3.9+
 - Django
-- ASGI
+- ASGI interface
 - Daphne server
 
 ### Frontend
-- Node.js
+- Node.js 16+
 - npm
-- Modern JS framework (React / Next)
+- React / Next.js–based architecture
 
-### Tooling
-- ngrok
-- Git
-- Linux shell
+### Tooling & Infra
+- ngrok (secure tunneling)
+- Git & GitHub
+- Linux shell environment
 
 ---
 
-## 4. Prerequisites
+## 4. Development Environment Requirements
 
-Make sure these are installed:
+Verify required tools:
 
 ```bash
 python --version   # >= 3.9
@@ -88,7 +101,7 @@ npm -v             # >= 8
 ngrok version
 ````
 
-If ngrok is missing:
+Install ngrok if missing:
 
 ```bash
 npm install -g ngrok
@@ -96,129 +109,7 @@ npm install -g ngrok
 
 ---
 
-## 5. Project Setup
-
-### Clone Repository
-
-```bash
-git clone https://github.com/saymanlal/demo_os.git
-cd demo_os
-```
-
----
-
-### Backend Dependencies
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-(If virtualenv is used, activate it first.)
-
----
-
-### Frontend Dependencies
-
-```bash
-cd ../frontend
-npm install
-```
-
----
-
-## 6. Running the Application (IMPORTANT)
-
-⚠️ **This project requires THREE DIFFERENT TERMINALS.**
-Running everything in one terminal will NOT work.
-
----
-
-## Terminal 1 — Backend Server (Core)
-
-```bash
-cd demo_os/backend
-daphne -b 0.0.0.0 -p 7000 backend.asgi:application
-```
-
-### What this does
-
-* Starts Django backend on port **7000**
-* Uses ASGI (required for WebSockets & async)
-* `0.0.0.0` allows ngrok to access it
-
-If this terminal stops → backend dies.
-
----
-
-## Terminal 2 — Ngrok Tunnel (Public Access)
-
-```bash
-cd demo_os
-ngrok http --request-header-add="ngrok-skip-browser-warning:true" 7000
-```
-
-### What this does
-
-* Exposes `localhost:7000` to the internet
-* Generates a public HTTPS URL
-* Removes ngrok browser warning header
-
-Example output:
-
-```
-Forwarding https://abc123.ngrok.io -> http://localhost:7000
-```
-
-📌 **This URL is what frontend will use as API base.**
-
----
-
-## Terminal 3 — Frontend Dev Server
-
-```bash
-cd demo_os/frontend
-npm run dev
-```
-
-### What this does
-
-* Starts frontend development server
-* Runs UI on local port (usually 3000)
-* Connects to backend using ngrok URL
-
----
-
-## 7. Frontend Environment Configuration
-
-Create or update:
-
-```bash
-frontend/.env
-```
-
-```env
-NEXT_PUBLIC_API_URL=https://abc123.ngrok.io
-```
-
-⚠️ Restart frontend after changing `.env`.
-
----
-
-## 8. Why 3 Terminals Are REQUIRED
-
-| Terminal         | Purpose          | Can it be merged? |
-| ---------------- | ---------------- | ----------------- |
-| Backend (Daphne) | Core API server  | ❌ No              |
-| Ngrok            | Public tunneling | ❌ No              |
-| Frontend (npm)   | UI dev server    | ❌ No              |
-
-Each process is blocking and long-running.
-Trying to run in one terminal = guaranteed failure.
-
----
-
-## 9. Project Folder Structure
+## 5. Repository Structure
 
 ```
 demo_os/
@@ -238,29 +129,182 @@ demo_os/
 └── README.md
 ```
 
+### Responsibility Boundaries
+
+* `backend/` → API layer, async execution, system logic
+* `frontend/` → UI, OS simulation, client-side state
+* `backup/` → non-production artifacts
+
 ---
 
-## 10. Common Mistakes & Fixes
+## 6. Installation & Dependency Setup
 
-### Backend not accessible via ngrok
-
-✔ Use `0.0.0.0`, not `127.0.0.1`
+### Clone Repository
 
 ```bash
-daphne -b 0.0.0.0 -p 7000 backend.asgi:application
+git clone https://github.com/saymanlal/demo_os.git
+cd demo_os
+```
+
+### Backend Dependencies
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### Frontend Dependencies
+
+```bash
+cd ../frontend
+npm install
 ```
 
 ---
 
-### Frontend not hitting backend
+## 7. Runtime Execution Model
 
-✔ Check `.env`
-✔ Restart frontend
-✔ Confirm ngrok URL is active
+AIOfficeOS runs as **three independent long-lived processes**:
+
+1. ASGI backend server
+2. Ngrok tunnel
+3. Frontend dev server
+
+Each process is blocking and must remain active.
 
 ---
 
-### Port already in use
+## 8. Multi-Terminal Workflow (Critical)
+
+⚠️ **This system REQUIRES three separate terminals.**
+Combining processes will break execution.
+
+---
+
+### Terminal 1 — Backend (ASGI Core)
+
+```bash
+cd demo_os/backend
+daphne -b 0.0.0.0 -p 7000 backend.asgi:application
+```
+
+Purpose:
+
+* Starts Django ASGI server
+* Enables async & WebSocket support
+* Binds externally for ngrok access
+
+---
+
+### Terminal 2 — Ngrok Tunnel
+
+```bash
+cd demo_os
+ngrok http --request-header-add="ngrok-skip-browser-warning:true" 7000
+```
+
+Purpose:
+
+* Exposes backend publicly
+* Generates HTTPS endpoint
+* Eliminates ngrok warning headers
+
+Example:
+
+```
+https://abc123.ngrok.io → http://localhost:7000
+```
+
+---
+
+### Terminal 3 — Frontend Dev Server
+
+```bash
+cd demo_os/frontend
+npm run dev
+```
+
+Purpose:
+
+* Serves UI
+* Connects to backend through ngrok URL
+* Enables hot reload
+
+---
+
+## 9. Backend Server Configuration
+
+Key requirements:
+
+* Must bind to `0.0.0.0`
+* Must use ASGI server (not runserver)
+* Must remain running before frontend starts
+
+Incorrect binding will break ngrok access.
+
+---
+
+## 10. Ngrok Tunneling Strategy
+
+Ngrok is used **only in development** to:
+
+* Simulate production-like HTTPS
+* Allow cross-origin frontend access
+* Enable testing on remote devices
+
+Ngrok URL must be treated as ephemeral.
+
+---
+
+## 11. Frontend Configuration & Execution
+
+Create or update environment file:
+
+```bash
+frontend/.env
+```
+
+```env
+NEXT_PUBLIC_API_URL=https://abc123.ngrok.io
+```
+
+⚠️ Frontend must be restarted after changes.
+
+---
+
+## 12. Environment Variable Management
+
+Rules:
+
+* Frontend variables must be prefixed with `NEXT_PUBLIC_`
+* Backend secrets must never be committed
+* Ngrok URLs must be updated on restart
+
+---
+
+## 13. Operational Constraints & Design Decisions
+
+* ASGI chosen over WSGI for future real-time features
+* Ngrok preferred over port forwarding for security
+* Multi-terminal workflow ensures process isolation
+* No implicit dependencies between layers
+
+---
+
+## 14. Troubleshooting & Diagnostics
+
+### Backend not reachable
+
+* Confirm `0.0.0.0` binding
+* Ensure ngrok tunnel is active
+
+### Frontend API errors
+
+* Verify `.env` value
+* Restart frontend
+* Check ngrok URL validity
+
+### Port conflict
 
 ```bash
 lsof -i :7000
@@ -269,22 +313,28 @@ kill -9 <PID>
 
 ---
 
-## 11. Future Improvements
+## 15. System Roadmap
 
-* Docker + docker-compose
-* Authentication system
-* Persistent database
-* WebSocket-based live features
-* Production ASGI server (Uvicorn + Nginx)
+* Docker & docker-compose
+* Authentication & user sessions
+* Persistent storage
+* WebSocket-based live services
+* Production ASGI stack (Uvicorn + Nginx)
 
 ---
 
-## 12. Maintainer
+## 16. Maintainers
 
 **Sayman Lal**
 GitHub: [https://github.com/saymanlal](https://github.com/saymanlal)
 Portfolio: [https://worksofsayman.vercel.app](https://worksofsayman.vercel.app)
 
-For bugs or improvements, open a GitHub issue.
+**Utkarsh Kushwaha**
+GitHub: [https://github.com/utkarshwrks](https://github.com/utkarshwrks)
+Portfolio: [https://utkarsh-kushwaha.vercel.app](https://utkarsh-kushwaha.vercel.app)
 
----
+**Yash Namdeo**
+GitHub: [https://github.com/yashwrks](https://github.com/yashwrks)
+LinkedIn: [https://linkedin.com/yashwrks](https://linkedin.com/yashwrks)
+
+For bugs or improvements, open a GitHub issue.
