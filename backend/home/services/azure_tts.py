@@ -14,7 +14,20 @@ class AzureTTS:
             speechsdk.SpeechSynthesisOutputFormat.Raw16Khz16BitMonoPcm
         )
 
+    def _fix_pronunciation(self, text: str) -> str:
+        """Fix common pronunciation issues for natural speech"""
+        # Fix "band" (बंद) pronunciation - replace with phonetic equivalent
+        # "band karna" sounds like music band, so use "बंद" or "close"
+        text = text.replace("band karna", "बंद karna")
+        text = text.replace("band kar", "बंद kar")
+        text = text.replace("ise band", "ise बंद")
+        
+        return text
+
     def synthesize(self, text: str) -> bytes:
+        # Fix pronunciation issues
+        text = self._fix_pronunciation(text)
+        
         # 🔥 AUTO voice switch
         if any("\u0900" <= ch <= "\u097F" for ch in text):
             # If Hindi characters → Aarti voice

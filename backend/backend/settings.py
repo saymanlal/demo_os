@@ -1,3 +1,7 @@
+"""
+Django settings for backend project.
+"""
+
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -7,10 +11,23 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# =========================
+# CORE
+# =========================
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
 
+DEBUG = True  # TEMPORARILY TRUE FOR DEBUGGING
+
+ALLOWED_HOSTS = ['*']  # TEMPORARY - allow all for testing
+
+# =========================
+# URL SETTINGS
+# =========================
+APPEND_SLASH = False  # FIX: Prevents 301 redirects
+
+# =========================
+# APPS
+# =========================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -24,9 +41,11 @@ INSTALLED_APPS = [
     "channels",
 
     "home",
-    
 ]
 
+# =========================
+# ASGI / CHANNELS
+# =========================
 ASGI_APPLICATION = "backend.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -34,15 +53,6 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
-
-ASGI_APPLICATION = "backend.asgi.application"
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
-
 
 # =========================
 # MIDDLEWARE
@@ -52,7 +62,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",  # DISABLED FOR API
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -88,17 +98,52 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
+    # "default": {
+    #     "ENGINE": "mssql",
+    #     "NAME": os.getenv("DB_NAME"),
+    #     "USER": os.getenv("DB_USER"),
+    #     "PASSWORD": os.getenv("DB_PASSWORD"),
+    #     "HOST": os.getenv("DB_HOST"),
+    #     "PORT": "1433",
+    #     "OPTIONS": {
+    #         "driver": "ODBC Driver 18 for SQL Server",
+    #         "extra_params": "TrustServerCertificate=yes;",
+    #     },
+    # }
 }
 
+# =========================
+# AUTH / DRF
+# =========================
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.AllowAny",  # TEMPORARY
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 # =========================
-# PASSWORD VALIDATION
+# CORS (FIXED)
 # =========================
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+CORS_ALLOW_ALL_ORIGINS = True  # TEMPORARY FOR TESTING
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://demo-os-two.vercel.app",
+    "https://aiofficeos.vercel.app",
 ]
 
 # =========================
@@ -109,44 +154,22 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# =========================
+# STATIC
+# =========================
 STATIC_URL = "static/"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================
-# CORS
+# TWILIO
 # =========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://demo-os-two.vercel.app",
-    "https://aiofficeos.vercel.app"
-]
-CORS_ALLOW_CREDENTIALS = True
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
-}
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-
-# =========================
-# TWILIO (SMS OTP)
-# =========================
-
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
-
-RUNSERVER_PORT = 2718
-RUNSERVER_ADDR = "127.0.0.1"
+# =========================
+# GROQ AI
+# =========================
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")

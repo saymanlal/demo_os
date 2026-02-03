@@ -1,5 +1,5 @@
 import os
-import threading
+import re
 import azure.cognitiveservices.speech as speechsdk
 from azure.cognitiveservices.speech import languageconfig
 
@@ -19,58 +19,24 @@ class AzureSpeechStream:
         if not self.speech_key or not self.region:
             raise RuntimeError("❌ Azure Speech credentials missing")
 
-        self.closed = False
-        self.paused = False
-        self.lock = threading.Lock()
-
-        # Track if recognizer is running
-        self.is_recognizing = False
-
-        self._build_recognizer()
-        self._start_recognition()
-
-        print("✅ Azure STT initialized")
-
-    def _build_recognizer(self):
-        """Configure Azure Speech recognizer"""
-        
-        # Speech config
         self.speech_config = speechsdk.SpeechConfig(
             subscription=self.speech_key,
             region=self.region
         )
 
-        # Enable detailed logging for debugging
-        self.speech_config.set_property(
-            speechsdk.PropertyId.Speech_LogFilename,
-            "azure_stt_debug.log"
-        )
-
-        # Auto language detection (Hindi + English)
         self.auto_lang_config = languageconfig.AutoDetectSourceLanguageConfig(
-            languages=["hi-IN", "en-IN", "en-US"]
+            languages=["hi-IN", "en-IN"]
         )
 
-        # ✅ CRITICAL: Correct audio format for Twilio
-        # Twilio sends: μ-law 8kHz mono
-        # We convert to: PCM 16kHz mono
         self.audio_format = speechsdk.audio.AudioStreamFormat(
             samples_per_second=16000,
             bits_per_sample=16,
             channels=1
         )
 
-        # Push stream (we manually feed audio)
-        self.push_stream = speechsdk.audio.PushAudioInputStream(
-            self.audio_format
-        )
+        self.push_stream = speechsdk.audio.PushAudioInputStream(self.audio_format)
+        self.audio_config = speechsdk.audio.AudioConfig(stream=self.push_stream)
 
-        # Audio config
-        self.audio_config = speechsdk.audio.AudioConfig(
-            stream=self.push_stream
-        )
-
-        # Create recognizer
         self.recognizer = speechsdk.SpeechRecognizer(
             speech_config=self.speech_config,
             audio_config=self.audio_config,
@@ -78,158 +44,202 @@ class AzureSpeechStream:
         )
 
         self._wire_events()
+        self.recognizer.start_continuous_recognition()
+        print("✅ Azure STT initialized")
 
+
+    # ----------------------------
+    # NUMBER + LETTER NORMALIZER
+    # ----------------------------
+    def _normalize_numbers_and_letters(self, text: str) -> str:
+        text = text.lower()
+
+        # CRITICAL: Handle special Hindi words FIRST before letter mapping
+        # नई gets corrupted to नE if ई is mapped to E first
+        special_hindi_words = {
+            "नई": "nayi",
+            "नयी": "nayi", 
+            "नया": "naya",
+            "नए": "naye",
+            "पुरानी": "purani",
+            "पुराना": "purana",
+            "पुराने": "purane"
+        }
+        
+        for hindi, english in special_hindi_words.items():
+            text = text.replace(hindi, english)
+
+        # Enhanced number mapping with spoken variations
+        number_map = {
+            "zero": "0", "जीरो": "0",
+            "one": "1", "ek": "1", "एक": "1",
+            "two": "2", "do": "2", "दो": "2",
+            "three": "3", "teen": "3", "तीन": "3", "थ्री": "3",
+            "four": "4", "char": "4", "चार": "4", "फोर": "4",
+            "five": "5", "paanch": "5", "पांच": "5", "panch": "5", "फाइव": "5",
+            "six": "6", "chhe": "6", "छह": "6", "chhah": "6", "सिक्स": "6",
+            "seven": "7", "saat": "7", "सात": "7", "सेवन": "7",
+            "eight": "8", "aath": "8", "आठ": "8", "aat": "8", "एट": "8",
+            "nine": "9", "nau": "9", "नौ": "9", "नाइन": "9",
+            "ten": "10", "das": "10", "दस": "10",
+            "eleven": "11", "gyaarah": "11", "ग्यारह": "11",
+            "twelve": "12", "baarah": "12", "बारह": "12",
+        }
+
+        # Apply number mapping with word boundaries for English words
+        for k, v in number_map.items():
+            if k.isascii():  # English words need word boundaries
+                text = re.sub(rf"\b{k}\b", v, text)
+            else:  # Hindi words can be replaced directly
+                text = text.replace(k, v)
+
+        # Letter mapping - common in complaint IDs
+        letter_map = {
+            "एम": "M", "पी": "P", "वी": "V",
+            "बी": "B", "सी": "C", "डी": "D",
+            "ए": "A", "ई": "E", "एफ": "F",
+            "जी": "G", "एच": "H", "आई": "I",
+            "जे": "J", "के": "K", "एल": "L",
+            "एन": "N", "ओ": "O", "क्यू": "Q",
+            "आर": "R", "एस": "S", "टी": "T",
+            "यू": "U", "डब्ल्यू": "W", "एक्स": "X",
+            "वाई": "Y", "जेड": "Z"
+        }
+
+        for k, v in letter_map.items():
+            text = text.replace(k, v)
+
+        # Handle common spoken patterns for complaint IDs
+        # "डबल सी" -> "CC", "ट्रिपल ए" -> "AAA"
+        double_pattern = re.compile(r"(डबल|double)\s*([a-z])", re.IGNORECASE)
+        text = double_pattern.sub(lambda m: m.group(2).upper() * 2, text)
+        
+        triple_pattern = re.compile(r"(ट्रिपल|triple)\s*([a-z])", re.IGNORECASE)
+        text = triple_pattern.sub(lambda m: m.group(2).upper() * 3, text)
+
+        return text.upper()
+
+
+    # ----------------------------
+    # CLEAN STT TEXT
+    # ----------------------------
+    def _clean_stt_text(self, text: str) -> str:
+        if not text:
+            return ""
+
+        original = text
+        text = text.strip()
+
+        # Remove punctuation but keep Hindi and English characters
+        text = re.sub(r"[।,.\?!;:]", "", text)
+        
+        # Normalize whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+
+        # CRITICAL: Normalize numbers FIRST before yes/no to prevent conflicts
+        # "नाइन" (nine) contains patterns that could trigger NO normalization
+        text = self._normalize_numbers_and_letters(text)
+
+        # Now convert Hindi words to English equivalents
+        # YES variations (both Hindi and English)
+        hindi_yes_patterns = [
+            (r"हाँ|हा|हां", "haan"),
+            (r"हूँ|हू|हुह|हुहह", "haan"),
+            (r"हम्म|हन", "haan")
+        ]
+        for pattern, replacement in hindi_yes_patterns:
+            text = re.sub(pattern, replacement, text, flags=re.I)
+        
+        # NO variations (both Hindi and English) - carefully to avoid "नाइन"
+        hindi_no_patterns = [
+            (r"नहीं|नही", "nahi"),
+            (r"ना(?![इईउऊए])", "nahi")  # Match "ना" but not if followed by vowels
+        ]
+        for pattern, replacement in hindi_no_patterns:
+            text = re.sub(pattern, replacement, text, flags=re.I)
+        
+        # NEW complaint variations - already handled in _normalize_numbers_and_letters
+        # OLD complaint variations - already handled in _normalize_numbers_and_letters
+
+        # Enhanced YES normalization - English variations
+        text = re.sub(
+            r"\b(haan|han|ha|haa|huh|huhh|hmm|hnn|hn|yes|yeah|yep|yup|haanji|hanji)\b",
+            "haan",
+            text,
+            flags=re.I
+        )
+
+        # Enhanced NO normalization - English variations
+        text = re.sub(
+            r"\b(nahi|nahin|na|nah|nhi|ni|no|nope|nahii|nahee)\b",
+            "nahi",
+            text,
+            flags=re.I
+        )
+
+        # NEW complaint normalization - English variations (nayi already set in normalize_numbers_and_letters)
+        text = re.sub(
+            r"\b(nai|naya|new)\b",
+            "nayi",
+            text,
+            flags=re.I
+        )
+
+        # OLD/EXISTING complaint normalization - English variations (purani already set)
+        text = re.sub(
+            r"\b(purana|old|existing)\b",
+            "purani",
+            text,
+            flags=re.I
+        )
+
+        if original != text:
+            print(f"🧹 STT FIXED: '{original}' → '{text}'")
+
+        return text
+
+
+    # ----------------------------
+    # EVENTS
+    # ----------------------------
     def _wire_events(self):
-        """Connect all Azure STT event handlers"""
+        self.recognizer.recognizing.connect(
+            lambda evt: print(f"🟡 PARTIAL: {evt.result.text}")
+        )
 
-        # ─────────────────────────────────────────────────────
-        # PARTIAL TRANSCRIPTION (real-time)
-        # ─────────────────────────────────────────────────────
-        def on_recognizing(evt):
-            if evt.result.text and not self.paused:
-                print(f"🟡 PARTIAL: {evt.result.text}")
+        def recognized(evt):
+            if evt.result.text:
+                raw = evt.result.text
+                cleaned = self._clean_stt_text(raw)
 
-        self.recognizer.recognizing.connect(on_recognizing)
+                print(f"🟢 FINAL RAW: {raw}")
+                print(f"🟢 FINAL CLEANED: {cleaned}")
 
-        # ─────────────────────────────────────────────────────
-        # FINAL TRANSCRIPTION (complete sentence)
-        # ─────────────────────────────────────────────────────
-        def on_recognized(evt):
-            if self.closed or self.paused:
-                return
+                if cleaned:
+                    self.on_final_text(cleaned)
 
-            if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                if evt.result.text:
-                    print(f"🟢 FINAL: {evt.result.text}")
-                    
-                    # ✅ Thread-safe callback
-                    try:
-                        self.on_final_text(evt.result.text)
-                    except Exception as e:
-                        print(f"❌ Callback error: {e}")
+        self.recognizer.recognized.connect(recognized)
 
-            elif evt.result.reason == speechsdk.ResultReason.NoMatch:
-                print("⚠️ No speech detected")
+        self.recognizer.session_started.connect(
+            lambda evt: print("🔊 Azure STT session started")
+        )
 
-        self.recognizer.recognized.connect(on_recognized)
+        self.recognizer.session_stopped.connect(
+            lambda evt: print("🛑 Azure STT session stopped")
+        )
 
-        # ─────────────────────────────────────────────────────
-        # SESSION STARTED
-        # ─────────────────────────────────────────────────────
-        def on_session_started(evt):
-            print("🎙️ Azure session started")
-            self.is_recognizing = True
-
-        self.recognizer.session_started.connect(on_session_started)
-
-        # ─────────────────────────────────────────────────────
-        # SESSION STOPPED (DO NOT AUTO-RESTART)
-        # ─────────────────────────────────────────────────────
-        def on_session_stopped(evt):
-            print("⏸️ Azure session stopped")
-            self.is_recognizing = False
-
-            # ❌ DO NOT AUTO-RESTART HERE
-            # Let pause/resume handle it explicitly
-
-        self.recognizer.session_stopped.connect(on_session_stopped)
-
-        # ─────────────────────────────────────────────────────
-        # CANCELED (error handling)
-        # ─────────────────────────────────────────────────────
-        def on_canceled(evt):
-            print(f"⚠️ Recognition canceled: {evt.reason}")
-            
-            if evt.reason == speechsdk.CancellationReason.Error:
-                print(f"❌ Error details: {evt.error_details}")
-            
-            self.is_recognizing = False
-
-        self.recognizer.canceled.connect(on_canceled)
-
-    def _start_recognition(self):
-        """Start continuous recognition (called once on init)"""
-        with self.lock:
-            if not self.is_recognizing and not self.closed:
-                try:
-                    self.recognizer.start_continuous_recognition()
-                    print("▶️ Azure recognition started")
-                except Exception as e:
-                    print(f"❌ Failed to start recognition: {e}")
 
     def push_audio(self, pcm_bytes: bytes):
-        """
-        Push PCM 16kHz mono audio to Azure
-        Called from Twilio WebSocket for each audio chunk
-        """
-        if self.closed or self.paused:
-            return
-
         try:
             self.push_stream.write(pcm_bytes)
         except Exception as e:
-            print(f"❌ Push audio error: {e}")
+            print(f"❌ Audio push error: {e}")
 
-    def pause(self):
-        """
-        Pause recognition (during TTS playback)
-        Does NOT stop the recognizer
-        """
-        if self.closed:
-            return
-
-        with self.lock:
-            if not self.paused:
-                self.paused = True
-                print("⏸️ Azure STT paused")
-
-    def resume(self):
-        """
-        Resume recognition after TTS
-        Restarts recognizer if it stopped
-        """
-        if self.closed:
-            return
-
-        with self.lock:
-            self.paused = False
-
-            # ✅ Restart if needed
-            if not self.is_recognizing:
-                try:
-                    self.recognizer.stop_continuous_recognition()
-                except:
-                    pass
-
-                try:
-                    self.recognizer.start_continuous_recognition()
-                    print("🔄 Azure STT resumed")
-                except Exception as e:
-                    print(f"❌ Resume failed: {e}")
-            else:
-                print("▶️ Azure STT resumed (already running)")
 
     def close(self):
-        """
-        Cleanup on call end
-        """
-        if self.closed:
-            return
-
-        print("🛑 Closing Azure STT...")
-
-        with self.lock:
-            self.closed = True
-            self.paused = True
-
-            try:
-                self.recognizer.stop_continuous_recognition()
-            except:
-                pass
-
-            try:
-                self.push_stream.close()
-            except:
-                pass
-
-        print("✅ Azure STT closed")
+        try:
+            self.recognizer.stop_continuous_recognition()
+            self.push_stream.close()
+            print("✅ Azure STT closed")
+        except Exception as e:
+            print(f"❌ STT close error: {e}")
