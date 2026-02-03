@@ -1,0 +1,36 @@
+{
+  "areas": [
+    {
+      "area_code": "MM001",
+      "area_name": "Madan Mahal",
+      "ivr_number": "+918305212146",
+      "consumers": [
+        {
+          "meter_no": "MPMM1001",
+          "consumer_name": "Ramesh Kumar",
+          "mobile": "8305212146",
+          "house_no": "H-23"
+        },
+        {
+          "meter_no": "MPMM1002",
+          "consumer_name": "Sita Devi",
+          "mobile": "9876543211",
+          "house_no": "H-45"
+        }
+      ]
+    },
+    {
+      "area_code": "GJ001",
+      "area_name": "Gohalpur",
+      "ivr_number": "+919713634860",
+      "consumers": [
+        {
+          "meter_no": "MPGJ2001",
+          "consumer_name": "Mohan Sharma",
+          "mobile": "9876543220",
+          "house_no": "B-12"
+        }
+      ]
+    }
+  ]
+}

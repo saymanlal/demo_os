@@ -2,9 +2,11 @@ from enum import Enum
 
 
 class ComplaintState(Enum):
-    ASK_CATEGORY = "ASK_CATEGORY"
-    ASK_DESCRIPTION = "ASK_DESCRIPTION"
-    ASK_LOCATION = "ASK_LOCATION"
-    CONFIRM = "CONFIRM"
-    REGISTER = "REGISTER"
-    DONE = "DONE"
+    """IVR State Machine States"""
+    GREETING = "greeting"
+    ASK_PROBLEM = "ask_problem"
+    VERIFY_METER = "verify_meter"
+    VERIFY_NAME = "verify_name"
+    CONFIRM = "confirm"
+    REGISTER = "register"
+    DONE = "done"

@@ -3,6 +3,7 @@ import base64
 import audioop
 import asyncio
 import os
+import re
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 from twilio.rest import Client
@@ -10,12 +11,17 @@ from twilio.rest import Client
 from home.services.azure_stt import AzureSpeechStream
 from home.services.azure_tts import AzureTTS
 from home.services.complaint_session import ComplaintSession
+from home.services.complaint_states import ComplaintState
 
 
 class TwilioMediaConsumer(AsyncWebsocketConsumer):
     """
     Twilio Media Stream WebSocket Handler
-    Handles real-time audio streaming between Twilio and Azure services
+    
+    ✅ Real-time audio streaming between Twilio ↔ Azure STT/TTS
+    ✅ Meter + Name verification flow
+    ✅ Hindi/English meter number normalization
+    ✅ Area-based IVR detection
     """
 
     # ═════════════════════════════════════════════════════════
@@ -59,8 +65,11 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        # ✅ Initialize complaint session
-        self.complaint_session = ComplaintSession("UNKNOWN")
+        # ✅ Initialize complaint session (numbers set in start event)
+        self.complaint_session = ComplaintSession(
+            caller_number="UNKNOWN",
+            ivr_number=None
+        )
         print("✅ Complaint session ready")
 
     # ═════════════════════════════════════════════════════════
@@ -100,8 +109,13 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
 
         print(f"📝 USER: {text}")
 
-        # ✅ FIXED: await async method
-        response_text, should_end = await self.complaint_session.handle_input(text)
+        # ✅ Normalize Hindi/English input (especially for meter numbers)
+        normalized_text = self._normalize_input(text)
+        if normalized_text != text:
+            print(f"🔤 Normalized: '{text}' → '{normalized_text}'")
+
+        # ✅ Process user input through complaint session
+        response_text, should_end = await self.complaint_session.handle_input(normalized_text)
 
         # 🔒 Ignore noise/debounced input
         if not response_text:
@@ -121,12 +135,84 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
             # Wait for TTS to complete
             await asyncio.sleep(2.0)
 
-            # Redirect to final TwiML
+            # Redirect to final TwiML (if complaint was registered)
             complaint_id = self.complaint_session.data.get("complaint_id")
             if complaint_id:
                 self.redirect_to_final_twiml(complaint_id)
+                print(f"✅ Complaint registered: {complaint_id}")
             else:
-                print("⚠️ No complaint_id - cannot redirect")
+                print("⚠️ No complaint_id - call ended without registration")
+
+    # ═════════════════════════════════════════════════════════
+    # HINDI/ENGLISH NORMALIZATION
+    # ═════════════════════════════════════════════════════════
+    def _normalize_input(self, text: str) -> str:
+        """
+        Normalize Hindi/English mixed input to pure English alphanumeric
+        
+        Examples:
+            "एमपीएमएम 1001" → "MPMM1001"
+            "मेरा मीटर नंबर है एम पी एम एम वन ज़ीरो ज़ीरो वन" → "MPMM1001"
+            "MPMM1001" → "MPMM1001" (unchanged)
+        """
+        
+        # Hindi to English letter mapping (comprehensive)
+        hindi_map = {
+            # Letters
+            'ए': 'A', 'बी': 'B', 'सी': 'C', 'डी': 'D', 'ई': 'E', 'इ': 'E',
+            'एफ': 'F', 'जी': 'G', 'एच': 'H', 'आई': 'I', 'जे': 'J',
+            'के': 'K', 'एल': 'L', 'एम': 'M', 'एन': 'N', 'ओ': 'O',
+            'पी': 'P', 'क्यू': 'Q', 'आर': 'R', 'एस': 'S', 'टी': 'T',
+            'यू': 'U', 'वी': 'V', 'डब्ल्यू': 'W', 'एक्स': 'X', 'वाई': 'Y', 'ज़ेड': 'Z',
+            
+            # Hindi digits (spoken form)
+            'शून्य': '0', 'ज़ीरो': '0', 'जीरो': '0',
+            'वन': '1', 'एक': '1',
+            'टू': '2', 'दो': '2',
+            'थ्री': '3', 'तीन': '3',
+            'फोर': '4', 'चार': '4',
+            'फाइव': '5', 'पांच': '5', 'पाँच': '5',
+            'सिक्स': '6', 'छह': '6',
+            'सेवन': '7', 'सात': '7',
+            'एट': '8', 'आठ': '8',
+            'नाइन': '9', 'नौ': '9',
+            
+            # Common words to remove
+            'मेरा': '', 'मीटर': '', 'नंबर': '', 'है': '',
+            'का': '', 'की': '', 'के': '',
+        }
+        
+        # Remove punctuation
+        text = re.sub(r'[।.,!?]', '', text)
+        
+        # Split into words
+        words = text.split()
+        normalized = []
+        
+        for word in words:
+            word_upper = word.upper()
+            
+            # If already alphanumeric, keep it
+            if word_upper.isalnum():
+                normalized.append(word_upper)
+                continue
+            
+            # Try Hindi to English mapping
+            if word in hindi_map:
+                converted = hindi_map[word]
+                if converted:  # Skip empty strings (filler words)
+                    normalized.append(converted)
+            else:
+                # Keep unknown words as-is
+                normalized.append(word_upper)
+        
+        # Join without spaces (for meter numbers like MPMM1001)
+        result = ''.join(normalized)
+        
+        # Clean up any remaining non-alphanumeric characters
+        result = re.sub(r'[^A-Z0-9]', '', result)
+        
+        return result
 
     # ═════════════════════════════════════════════════════════
     # TEXT-TO-SPEECH (AZURE → TWILIO)
@@ -257,20 +343,40 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
             self.call_sid = msg["start"]["callSid"]
             self.stream_sid = msg["start"]["streamSid"]
 
-            # Extract caller number
+            # ✅ Extract caller and IVR numbers from custom parameters
             start_data = msg["start"]
+            custom_params = start_data.get("customParameters", {})
+            
+            # Get caller number
             caller = (
-                start_data.get("customParameters", {}).get("from") or
+                custom_params.get("from") or
+                custom_params.get("From") or
                 start_data.get("from") or
-                start_data.get("caller") or
                 "UNKNOWN"
             )
             
+            # ✅ CRITICAL: Get IVR number (which number was called)
+            ivr_number = (
+                custom_params.get("to") or
+                custom_params.get("To") or
+                start_data.get("to") or
+                None
+            )
+            
+            # ✅ Set both numbers in complaint session
             self.complaint_session.caller_number = caller
+            self.complaint_session.ivr_number = ivr_number
 
-            print(f"📞 Call started | SID: {self.call_sid} | From: {caller}")
+            print("=" * 60)
+            print(f"📞 Call started | SID: {self.call_sid}")
+            print(f"   📱 From: {caller}")
+            print(f"   🏢 IVR: {ivr_number}")
+            print("=" * 60)
 
-            # ✅ Greet user
+            # ✅ Set state to ASK_PROBLEM and greet user
+            self.complaint_session.step = 1
+            self.complaint_session.state = ComplaintState.ASK_PROBLEM
+            
             await self.speak(
                 "Namaskar. Madhya Pradesh Vidyut Vibhag helpline mein aapka swagat hai. "
                 "Kripya apni bijli sambandhit samasya batayein."
@@ -338,7 +444,8 @@ class TwilioMediaConsumer(AsyncWebsocketConsumer):
         # ⚠️ UNKNOWN EVENT
         # ─────────────────────────────────────────────────────
         else:
-            print(f"⚠️ Unknown event: {event}")
+            if event != "connected":  # Skip "connected" event (common)
+                print(f"⚠️ Unknown event: {event}")
 
     # ═════════════════════════════════════════════════════════
     # WEBSOCKET DISCONNECT
