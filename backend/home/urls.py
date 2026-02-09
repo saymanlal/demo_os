@@ -1,7 +1,9 @@
 from django.urls import path
 from home.views.otp import SendPhoneOTP
 from home.views.login_otp import LoginSendOTP
-from home.views.auth import SignupView, VerifyPhoneOTP
+
+from home.views.auth import SignupView, VerifyPhoneOTP, MeView
+
 from home.views.dashboard import (
     DashboardView,
     AdminDashboardView,
@@ -55,6 +57,8 @@ path("admin/analytics/complaint-status/", AdminComplaintStatusView.as_view()),
 path("admin/analytics/avg-duration/", AdminAverageDurationView.as_view()),
 path("admin/export/calls/", AdminExportCallsCSV.as_view()),
 path("admin/recording/<str:call_sid>/", AdminRecordingView.as_view()),
+path("auth/me/", MeView.as_view()),
+
 
 
 ]

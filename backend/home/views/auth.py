@@ -75,3 +75,17 @@ class VerifyPhoneOTP(APIView):
             "access": str(refresh.access_token),
             "refresh": str(refresh)
         })
+
+
+from rest_framework.permissions import IsAuthenticated
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        return Response({
+            "phone": user.username,
+            "groups": list(user.groups.values_list("name", flat=True))
+        })

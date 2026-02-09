@@ -7,15 +7,19 @@ const noAuth = {
   },
 };
 
-// 🔐 SIGNUP
+/* ===============================
+   🔐 AUTH APIs
+================================= */
+
+// 📝 SIGNUP
 export const signupUser = (data) =>
   api.post("/auth/signup/", data, noAuth);
 
-// 📱 SIGNUP OTP
+// 📱 SEND SIGNUP OTP
 export const sendSignupOTP = (data) =>
   api.post("/auth/send-otp/", data, noAuth);
 
-// 🔑 LOGIN OTP
+// 🔑 SEND LOGIN OTP
 export const sendLoginOTP = (data) =>
   api.post("/auth/login-otp/", data, noAuth);
 
@@ -23,7 +27,7 @@ export const sendLoginOTP = (data) =>
 export const verifyOTP = (data) =>
   api.post("/auth/verify-otp/", data, noAuth);
 
-// 🔁 FORGOT PASSWORD
+// 🔁 FORGOT PASSWORD FLOW
 export const sendForgotOTP = (data) =>
   api.post("/auth/forgot-password/", data, noAuth);
 
@@ -32,3 +36,9 @@ export const verifyForgotOTP = (data) =>
 
 export const resetPassword = (data) =>
   api.post("/auth/reset-password/", data, noAuth);
+
+/* ===============================
+   👤 CURRENT USER (ROLE FETCH)
+================================= */
+
+export const getMe = () => api.get("/auth/me/");

@@ -16,20 +16,38 @@ import AdminComplaints from "./admin/pages/AdminComplaints";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
-const isAuth = () => !!localStorage.getItem("access_token");
+/* ============================
+   🔐 AUTH HELPERS
+============================ */
 
-// 🔐 Check if user is Admin (you can customize this logic)
-const isAdmin = () => {
-  const token = localStorage.getItem("access_token");
-  // For now, just check if token exists
-  // Later you can decode JWT to check user.groups
-  return !!token;
+const getToken = () => localStorage.getItem("access_token");
+
+const getGroups = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user_groups") || "[]");
+  } catch {
+    return [];
+  }
 };
+
+const isAuth = () => !!getToken();
+
+const isAdmin = () => {
+  if (!isAuth()) return false;
+
+  const groups = getGroups();
+  return groups.includes("Admin") || groups.includes("SuperAdmin");
+};
+
+/* ============================
+   🚀 APP ROOT
+============================ */
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <ThemeProvider>
       <Routes>
+
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<App />} />
         <Route path="/features" element={<Features />} />
@@ -39,22 +57,41 @@ createRoot(document.getElementById("root")).render(
         {/* 🔒 USER DASHBOARD */}
         <Route
           path="/dashboard"
-          element={isAuth() ? <Dashboard /> : <Navigate to="/auth" />}
+          element={
+            isAuth()
+              ? <Dashboard />
+              : <Navigate to="/auth" replace />
+          }
         />
 
-        {/* 🔐 ADMIN ROUTES (Protected) */}
+        {/* 🔐 ADMIN ROUTES */}
         <Route
           path="/admin"
-          element={isAdmin() ? <AdminDashboard /> : <Navigate to="/auth" />}
+          element={
+            isAdmin()
+              ? <AdminDashboard />
+              : <Navigate to="/auth" replace />
+          }
         />
+
         <Route
           path="/admin/calls"
-          element={isAdmin() ? <AdminCalls /> : <Navigate to="/auth" />}
+          element={
+            isAdmin()
+              ? <AdminCalls />
+              : <Navigate to="/auth" replace />
+          }
         />
+
         <Route
           path="/admin/complaints"
-          element={isAdmin() ? <AdminComplaints /> : <Navigate to="/auth" />}
+          element={
+            isAdmin()
+              ? <AdminComplaints />
+              : <Navigate to="/auth" replace />
+          }
         />
+
       </Routes>
     </ThemeProvider>
   </BrowserRouter>

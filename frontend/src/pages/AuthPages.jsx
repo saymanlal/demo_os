@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Shield,
-  Sparkles,
   Key,
   CheckCircle,
   Loader2
@@ -29,13 +28,14 @@ import {
   sendForgotOTP,
   verifyForgotOTP,
   resetPassword,
+  getMe, // ✅ ADDED
 } from "../api/auth";
 
 import { setAuthToken } from "../api";
 
 export default function AuthPages() {
-  const [mode, setMode] = useState("signin"); // signin | signup | forgot
-  const [step, setStep] = useState("form"); // form | otp | reset
+  const [mode, setMode] = useState("signin");
+  const [step, setStep] = useState("form");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -95,8 +95,12 @@ export default function AuthPages() {
     }
   };
 
+  /* ================================
+     🔥 UPDATED ADMIN-AWARE LOGIN
+  ================================== */
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+
     if (otp.join("").length !== 6) {
       setError("Please enter a 6-digit OTP");
       return;
@@ -112,11 +116,24 @@ export default function AuthPages() {
         otp: otp.join(""),
       });
 
+      // 1️⃣ Set JWT token
       setAuthToken(res.data.access);
+
+      // 2️⃣ Fetch user info (groups)
+      const me = await getMe();
+
+      // 3️⃣ Store groups
+      localStorage.setItem(
+        "user_groups",
+        JSON.stringify(me.data.groups || [])
+      );
+
       setSuccess("Login successful! Redirecting...");
+
       setTimeout(() => {
         window.location.href = "/dashboard";
       }, 1000);
+
     } catch (err) {
       setError(err.response?.data?.error || "Invalid OTP. Please try again.");
     } finally {
@@ -125,6 +142,21 @@ export default function AuthPages() {
   };
 
   /* -------- FORGOT PASSWORD FLOW -------- */
+  
+  const switchMode = () => {
+    const newMode = mode === "signin" ? "signup" : "signin";
+    setMode(newMode);
+    setStep("form");
+    setError("");
+    setSuccess("");
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+    });
+    setOtp(new Array(6).fill(""));
+  };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -180,28 +212,19 @@ export default function AuthPages() {
         new_password: formData.password,
       });
 
-      setSuccess("Password reset successful! Redirecting to login...");
+      setSuccess("Password reset successful!");
       setTimeout(() => {
         setMode("signin");
         setStep("form");
         setFormData({ name: "", email: "", phone: "", password: "" });
         setOtp(new Array(6).fill(""));
       }, 2000);
+
     } catch (err) {
       setError(err.response?.data?.error || "Password reset failed");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const switchMode = () => {
-    const newMode = mode === "signin" ? "signup" : "signin";
-    setMode(newMode);
-    setStep("form");
-    setError("");
-    setSuccess("");
-    setFormData({ name: "", email: "", phone: "", password: "" });
-    setOtp(new Array(6).fill(""));
   };
 
   const goBack = () => {
@@ -222,11 +245,10 @@ export default function AuthPages() {
 
   const handleOtpChange = (element, index) => {
     if (isNaN(element.value)) return false;
-    
     const newOtp = [...otp];
     newOtp[index] = element.value;
     setOtp(newOtp);
-    
+
     // Focus next input
     if (element.value && element.nextSibling) {
       element.nextSibling.focus();
