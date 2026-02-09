@@ -1,11 +1,7 @@
-# ~/demo_os/backend/home/consumers/twilio_media.py
 import json
 import base64
 import audioop
 import asyncio
-import os
-import re
-
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 import logging
@@ -19,13 +15,12 @@ logger = logging.getLogger(__name__)
 
 class TwilioMediaConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        """Initialize WebSocket connection and services"""
-        
         await self.accept()
         logger.info("🔗 Twilio WebSocket connected")
 
         self.call_sid = None
         self.stream_sid = None
+        self.loop = asyncio.get_event_loop()
         self.call_active = True
         self.is_agent_speaking = False
         self.awaiting_user_response = False

@@ -4,37 +4,35 @@ from datetime import timedelta
 import uuid
 
 
+# ==========================================================
+# OTP MODEL
+# ==========================================================
 class PhoneOTP(models.Model):
     """OTP verification for user authentication"""
-    
+
     phone = models.CharField(max_length=15, db_index=True)
     otp_hash = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     attempts = models.PositiveIntegerField(default=0)
 
     def is_expired(self):
-        """Check if OTP is older than 5 minutes"""
         return timezone.now() > self.created_at + timedelta(minutes=5)
 
     def __str__(self):
         return f"OTP for {self.phone}"
 
 
+# ==========================================================
+# COMPLAINT MODEL
+# ==========================================================
 class Complaint(models.Model):
-    """
-    Complaint model with verified consumer information
-    ✅ UPDATED: Added meter_no, consumer_name, area_code for verification
-    """
-    
+
     STATUS_CHOICES = [
         ("REGISTERED", "Registered"),
         ("IN_PROGRESS", "In Progress"),
         ("RESOLVED", "Resolved"),
     ]
 
-    # ═══════════════════════════════════════════════════════
-    # CORE FIELDS (Existing)
-    # ═══════════════════════════════════════════════════════
     complaint_id = models.CharField(
         max_length=20,
         unique=True,
@@ -43,11 +41,7 @@ class Complaint(models.Model):
         blank=True
     )
 
-    caller_number = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True
-    )
+    caller_number = models.CharField(max_length=20, null=True, blank=True)
 
     call_sid = models.CharField(
         max_length=50,
@@ -59,15 +53,8 @@ class Complaint(models.Model):
     category = models.CharField(max_length=100)
     description = models.TextField()
 
-    location = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
-    )
+    location = models.CharField(max_length=255, null=True, blank=True)
 
-    # ═══════════════════════════════════════════════════════
-    # PHASE 3 FIELDS (Existing)
-    # ═══════════════════════════════════════════════════════
     complaint_json = models.JSONField(null=True, blank=True)
     language = models.CharField(max_length=10, default="hi-IN")
     confirmed = models.BooleanField(default=False)
@@ -80,56 +67,20 @@ class Complaint(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # ═══════════════════════════════════════════════════════
-    # 🆕 VERIFICATION FIELDS (NEW - For Meter + Name Flow)
-    # ═══════════════════════════════════════════════════════
-    meter_no = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text="Verified meter/consumer ID"
-    )
+    meter_no = models.CharField(max_length=20, null=True, blank=True, db_index=True)
+    consumer_name = models.CharField(max_length=100, null=True, blank=True)
+    area_code = models.CharField(max_length=10, null=True, blank=True, db_index=True)
+    area_name = models.CharField(max_length=100, null=True, blank=True)
 
-    consumer_name = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        help_text="Verified consumer name from registry"
-    )
+    verified = models.BooleanField(default=False)
 
-    area_code = models.CharField(
-        max_length=10,
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text="Area code (e.g., MM001, GJ001)"
-    )
-
-    area_name = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        help_text="Area name (e.g., Madan Mahal)"
-    )
-
-    verified = models.BooleanField(
-        default=False,
-        help_text="True if both meter and name were verified"
-    )
-
-    # ═══════════════════════════════════════════════════════
-    # METHODS
-    # ═══════════════════════════════════════════════════════
     def save(self, *args, **kwargs):
-        """Auto-generate complaint_id if not present"""
         if not self.complaint_id:
             self.complaint_id = f"MPV-{uuid.uuid4().hex[:7].upper()}"
-        
-        # Auto-set verified flag if meter and consumer name exist
+
         if self.meter_no and self.consumer_name:
             self.verified = True
-        
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -141,3 +92,88 @@ class Complaint(models.Model):
             models.Index(fields=['meter_no', 'area_code']),
             models.Index(fields=['verified', 'status']),
         ]
+
+
+# ==========================================================
+# CALL LOG MODEL (FINAL CLEAN VERSION)
+# ==========================================================
+class CallLog(models.Model):
+
+    CALL_TYPE_CHOICES = [
+        ('inbound', 'Inbound'),
+        ('outbound', 'Outbound'),
+    ]
+
+    STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('busy', 'Busy'),
+        ('failed', 'Failed'),
+        ('no-answer', 'No Answer'),
+        ('cancelled', 'Cancelled'),
+        ('in-progress', 'In Progress'),
+    ]
+
+    call_sid = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True
+    )
+
+    phone_number = models.CharField(
+        max_length=20,
+        db_index=True
+    )
+
+    call_type = models.CharField(
+        max_length=10,
+        choices=CALL_TYPE_CHOICES,
+        db_index=True
+    )
+
+    duration = models.IntegerField(default=0)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='in-progress',
+        db_index=True
+    )
+
+    recording_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
+    # ✅ Only Complaint FK (Consumer removed completely)
+    complaint = models.ForeignKey(
+        Complaint,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='call_logs'
+    )
+
+    from_number = models.CharField(max_length=20, blank=True)
+    to_number = models.CharField(max_length=20, blank=True)
+
+    error_message = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['call_type', 'status']),
+            models.Index(fields=['phone_number', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.call_type} - {self.phone_number} - {self.status}"
+
+    @property
+    def duration_formatted(self):
+        minutes = self.duration // 60
+        seconds = self.duration % 60
+        return f"{minutes:02d}:{seconds:02d}"

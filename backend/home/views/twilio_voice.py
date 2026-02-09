@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from twilio.twiml.voice_response import VoiceResponse, Connect, Stream
 
+from home.services.call_logger import CallLoggerService
+
 
 @csrf_exempt
 def twilio_voice(request):
@@ -12,6 +14,7 @@ def twilio_voice(request):
     ✅ Extracts caller and IVR numbers
     ✅ Passes them to WebSocket as custom parameters
     ✅ Starts media streaming for real-time audio
+    ✅ LOGS CALL TO DATABASE (NEW)
     """
     
     # ═══════════════════════════════════════════════════════════
@@ -39,6 +42,19 @@ def twilio_voice(request):
     caller_city = request.POST.get('FromCity', '')
     caller_state = request.POST.get('FromState', '')
     caller_country = request.POST.get('FromCountry', '')
+    
+    # ═══════════════════════════════════════════════════════════
+    # 🔥 NEW: LOG CALL START TO DATABASE
+    # ═══════════════════════════════════════════════════════════
+    CallLoggerService.log_call_start(
+        call_sid=call_sid,
+        phone_number=caller_number,
+        call_type='inbound',
+        from_number=caller_number,
+        to_number=ivr_number,
+        
+  # Will link later if consumer identified
+    )
     
     # ═══════════════════════════════════════════════════════════
     # STEP 3: Log Call Details
