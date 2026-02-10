@@ -1,4 +1,4 @@
-import api from "./api";  // ✅ This will now work
+import api from "../api/api";  // ✅ Correct path to src/api.js
 
 // Dashboard Summary
 export const getAdminDashboard = (params) => {
@@ -13,6 +13,11 @@ export const getAdminCalls = (params) => {
 // Complaint List
 export const getAdminComplaints = (params) => {
   return api.get("/admin/complaints/", { params });
+};
+
+// 🎙️ Recordings List (NEW)
+export const getAdminRecordings = (params) => {
+  return api.get("/admin/recordings/", { params });
 };
 
 // Analytics

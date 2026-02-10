@@ -1,6 +1,6 @@
 """
 backend/home/services/call_logger.py
-FINAL CLEAN VERSION
+ENHANCED VERSION WITH RECORDING SUPPORT
 """
 
 from home.models import CallLog, Complaint
@@ -92,4 +92,43 @@ class CallLoggerService:
 
         except Exception as e:
             logger.error(f"❌ Error updating call {call_sid}: {str(e)}")
+            return None
+
+    # ============================================
+    # 🎙️ UPDATE RECORDING INFO (NEW METHOD)
+    # ============================================
+    @staticmethod
+    def update_recording(
+        call_sid,
+        recording_sid=None,
+        recording_url=None,
+        recording_duration=None,
+    ):
+        """
+        Update recording information for a call
+        Called from recording_callback webhook
+        """
+        try:
+            call_log = CallLog.objects.get(call_sid=call_sid)
+
+            if recording_sid:
+                call_log.recording_sid = recording_sid
+
+            if recording_url:
+                call_log.recording_url = recording_url
+
+            if recording_duration is not None:
+                call_log.recording_duration = int(recording_duration)
+
+            call_log.save()
+
+            logger.info(f"🎙️ Recording saved for call: {call_sid}")
+            return call_log
+
+        except CallLog.DoesNotExist:
+            logger.warning(f"⚠️ CallLog not found for recording: {call_sid}")
+            return None
+
+        except Exception as e:
+            logger.error(f"❌ Error saving recording for {call_sid}: {str(e)}")
             return None

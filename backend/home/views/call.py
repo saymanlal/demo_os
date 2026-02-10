@@ -13,7 +13,8 @@ from home.services.call_logger import CallLoggerService
 def start_call(request):
     """
     Start outbound call via Twilio
-    ✅ LOGS OUTBOUND CALLS (NEW)
+    ✅ LOGS OUTBOUND CALLS
+    🎙️ RECORDS CALLS (NEW)
     """
 
     # ✅ CORS PREFLIGHT
@@ -44,21 +45,27 @@ def start_call(request):
         client = Client(account_sid, auth_token)
 
         # ═══════════════════════════════════════════════════════════
-        # Create Twilio Call with Status Callback
+        # Create Twilio Call with Status Callback + RECORDING
         # ═══════════════════════════════════════════════════════════
         call = client.calls.create(
             to=to_number,
             from_=from_number,
             url=f"{base_url}/api/twilio/voice/",
             method="POST",
-            # 🔥 NEW: Add status callback to capture call end
+            
+            # 📊 Status callback to capture call end
             status_callback=f"{base_url}/api/twilio/status-callback/",
             status_callback_method="POST",
-            status_callback_event=["completed", "failed", "busy", "no-answer"]
+            status_callback_event=["completed", "failed", "busy", "no-answer"],
+            
+            # 🎙️ NEW: ENABLE CALL RECORDING
+            record=True,
+            recording_status_callback=f"{base_url}/api/twilio/recording-callback/",
+            recording_status_callback_method="POST",
         )
 
         # ═══════════════════════════════════════════════════════════
-        # 🔥 NEW: LOG OUTBOUND CALL
+        # 🔥 LOG OUTBOUND CALL
         # ═══════════════════════════════════════════════════════════
         CallLoggerService.log_call_start(
             call_sid=call.sid,
@@ -66,13 +73,14 @@ def start_call(request):
             call_type='outbound',
             from_number=from_number,
             to_number=to_number,
-           
-  # Can link later if needed
         )
+
+        print(f"✅ Call initiated with recording: {call.sid}")
 
         response = JsonResponse({
             "status": "calling",
-            "sid": call.sid
+            "sid": call.sid,
+            "recording_enabled": True  # Let frontend know recording is on
         })
 
         response["Access-Control-Allow-Origin"] = "https://aiofficeos.vercel.app"
@@ -86,7 +94,7 @@ def start_call(request):
 
 
 # ═══════════════════════════════════════════════════════════
-# 🔥 NEW: STATUS CALLBACK WEBHOOK
+# 📊 STATUS CALLBACK WEBHOOK
 # ═══════════════════════════════════════════════════════════
 
 @csrf_exempt
@@ -102,7 +110,6 @@ def call_status_callback(request):
     call_sid = request.POST.get('CallSid')
     call_status = request.POST.get('CallStatus')  # completed, busy, failed, no-answer
     call_duration = request.POST.get('CallDuration', 0)  # in seconds
-    recording_url = request.POST.get('RecordingUrl', None)
     
     # Log for debugging
     print("=" * 60)
@@ -111,8 +118,6 @@ def call_status_callback(request):
     print(f"   Call SID:      {call_sid}")
     print(f"   Status:        {call_status}")
     print(f"   Duration:      {call_duration}s")
-    if recording_url:
-        print(f"   Recording:     {recording_url}")
     print("=" * 60)
     
     # ═══════════════════════════════════════════════════════════
@@ -122,7 +127,6 @@ def call_status_callback(request):
         call_sid=call_sid,
         status=call_status,
         duration=int(call_duration) if call_duration else 0,
-        recording_url=recording_url
     )
     
     return HttpResponse(status=200)
