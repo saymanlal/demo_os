@@ -93,6 +93,8 @@ class Complaint(models.Model):
             models.Index(fields=['verified', 'status']),
         ]
 
+        
+
 
 # ==========================================================
 # CALL LOG MODEL (FINAL CLEAN VERSION)
