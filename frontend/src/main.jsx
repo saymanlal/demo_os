@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminCalls from "./admin/pages/AdminCalls";
 import AdminComplaints from "./admin/pages/AdminComplaints";
-
+import AdminRecordings from "./admin/pages/AdminRecordings";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
@@ -88,6 +88,15 @@ createRoot(document.getElementById("root")).render(
           element={
             isAdmin()
               ? <AdminComplaints />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/admin/recordings"
+          element={
+            isAdmin()
+              ? <AdminRecordings />
               : <Navigate to="/auth" replace />
           }
         />

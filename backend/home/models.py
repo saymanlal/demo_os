@@ -97,7 +97,7 @@ class Complaint(models.Model):
 
 
 # ==========================================================
-# CALL LOG MODEL (FINAL CLEAN VERSION)
+# CALL LOG MODEL (ENHANCED WITH RECORDING FIELDS)
 # ==========================================================
 class CallLog(models.Model):
 
@@ -141,10 +141,24 @@ class CallLog(models.Model):
         db_index=True
     )
 
+    # ✅ RECORDING FIELDS
     recording_url = models.URLField(
         max_length=500,
         blank=True,
         null=True
+    )
+    
+    recording_sid = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text="Twilio Recording SID"
+    )
+    
+    recording_duration = models.IntegerField(
+        default=0,
+        help_text="Recording duration in seconds"
     )
 
     # ✅ Only Complaint FK (Consumer removed completely)
@@ -179,3 +193,24 @@ class CallLog(models.Model):
         minutes = self.duration // 60
         seconds = self.duration % 60
         return f"{minutes:02d}:{seconds:02d}"
+    
+    @property
+    def recording_duration_formatted(self):
+        """Format recording duration"""
+        if self.recording_duration:
+            minutes = self.recording_duration // 60
+            seconds = self.recording_duration % 60
+            return f"{minutes:02d}:{seconds:02d}"
+        return "00:00"
+    
+    @property
+    def has_recording(self):
+        """Check if recording exists"""
+        return bool(self.recording_url)
+    
+    @property
+    def recording_mp3_url(self):
+        """Get MP3 URL for the recording"""
+        if self.recording_url:
+            return f"{self.recording_url}.mp3"
+        return None
