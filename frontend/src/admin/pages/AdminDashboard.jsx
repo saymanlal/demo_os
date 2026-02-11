@@ -10,17 +10,18 @@ import { getAdminDashboard } from "../../api/admin";
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeChart, setActiveChart] = useState("trend");
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboard();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboard = async () => {
     try {
-      const response = await getAdminDashboard();
-      setData(response.data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      const res = await getAdminDashboard();
+      setData(res.data);
+    } catch (err) {
+      console.error("Dashboard error:", err);
     } finally {
       setLoading(false);
     }
@@ -29,9 +30,8 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <AdminLayout>
-        <div style={{ textAlign: "center", padding: "60px", color: "#94a3b8" }}>
-          <div style={{ fontSize: "48px", marginBottom: "16px" }}>📊</div>
-          <div style={{ fontSize: "18px" }}>Loading dashboard...</div>
+        <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af" }}>
+          Loading dashboard...
         </div>
       </AdminLayout>
     );
@@ -39,41 +39,42 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div style={{ maxWidth: "1600px", margin: "0 auto" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: "700", color: "#fff", marginBottom: "8px", display: "flex", alignItems: "center", gap: "12px" }}>
-          📊 Admin Dashboard
-        </h1>
-        <p style={{ color: "#94a3b8", fontSize: "16px", marginBottom: "32px" }}>
-          Welcome back! Here's your system overview and analytics.
-        </p>
-        
-        {/* Dashboard Cards */}
-        <DashboardCards data={data} />
-        
-        {/* Charts Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px", marginBottom: "20px" }}>
-          <div style={{ background: "#1e293b", borderRadius: "16px", border: "1px solid #334155", padding: "24px" }}>
-            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "600", marginBottom: "20px" }}>📈 Call Trend (Last 7 Days)</h2>
-            <CallTrendChart />
-          </div>
-          
-          <div style={{ background: "#1e293b", borderRadius: "16px", border: "1px solid #334155", padding: "24px" }}>
-            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "600", marginBottom: "20px" }}>⏱️ Average Call Duration</h2>
-            <AvgDurationCard />
-          </div>
+      <div style={{ maxWidth: "1500px", margin: "0 auto" }}>
+        <div style={{ marginBottom: "32px" }}>
+          <h1 style={{ fontSize: "28px", fontWeight: 700 }}>
+            Admin Dashboard
+          </h1>
+          <p style={{ color: "#6b7280", marginTop: "6px" }}>
+            System analytics overview
+          </p>
         </div>
 
-        {/* Status Charts */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-          <div style={{ background: "#1e293b", borderRadius: "16px", border: "1px solid #334155", padding: "24px" }}>
-            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "600", marginBottom: "20px" }}>📊 Call Status Distribution</h2>
-            <CallStatusChart />
-          </div>
-          
-          <div style={{ background: "#1e293b", borderRadius: "16px", border: "1px solid #334155", padding: "24px" }}>
-            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "600", marginBottom: "20px" }}>📝 Complaint Status</h2>
-            <ComplaintStatusChart />
-          </div>
+        <DashboardCards data={data} />
+
+        <div style={{ marginTop: "30px", marginBottom: "20px" }}>
+          <select
+            value={activeChart}
+            onChange={(e) => setActiveChart(e.target.value)}
+            style={{
+              padding: "10px 16px",
+              background: "#111827",
+              border: "1px solid #374151",
+              color: "#e5e7eb",
+              borderRadius: "8px",
+            }}
+          >
+            <option value="trend">Call Trend</option>
+            <option value="status">Call Status</option>
+            <option value="complaints">Complaint Status</option>
+          </select>
+        </div>
+
+        {activeChart === "trend" && <CallTrendChart />}
+        {activeChart === "status" && <CallStatusChart />}
+        {activeChart === "complaints" && <ComplaintStatusChart />}
+
+        <div style={{ marginTop: "30px" }}>
+          <AvgDurationCard />
         </div>
       </div>
     </AdminLayout>
