@@ -1,29 +1,35 @@
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Sum
 from django.db.models.functions import TruncDay
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from backend.models import CallLog, Complaint
+from home.models import CallLog, Complaint
 
 
 class AdminDashboardView(APIView):
     def get(self, request):
-
         total_calls = CallLog.objects.count()
         completed_calls = CallLog.objects.filter(status__iexact="completed").count()
+        inbound_calls = CallLog.objects.filter(call_type__iexact="inbound").count()
+        outbound_calls = CallLog.objects.filter(call_type__iexact="outbound").count()
 
         total_complaints = Complaint.objects.count()
         resolved_complaints = Complaint.objects.filter(status__iexact="resolved").count()
 
-        avg_duration = CallLog.objects.aggregate(
-            avg=Avg("duration")
-        )["avg"] or 0
+        total_talk_time = CallLog.objects.aggregate(
+            total=Sum("duration")
+        )["total"] or 0
 
         return Response({
-            "stats": {
-                "total_calls": total_calls,
-                "completed_calls": completed_calls,
-                "total_complaints": total_complaints,
-                "resolved_complaints": resolved_complaints,
+            "calls": {
+                "total": total_calls,
+                "completed": completed_calls,
+                "inbound": inbound_calls,
+                "outbound": outbound_calls,
+                "total_talk_time_seconds": total_talk_time
+            },
+            "complaints": {
+                "total": total_complaints,
+                "resolved": resolved_complaints
             }
         })
 

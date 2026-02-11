@@ -67,8 +67,25 @@ const container = {
 
 function ChartHeader({ title, type, setType }) {
   return (
-    <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between" }}>
-      <h3>{title}</h3>
+    <div
+      style={{
+        marginBottom: "20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <h3
+        style={{
+          margin: 0,
+          color: "#ffffff",
+          fontSize: "18px",
+          fontWeight: 600,
+        }}
+      >
+        {title}
+      </h3>
+
       <select
         value={type}
         onChange={(e) => setType(e.target.value)}

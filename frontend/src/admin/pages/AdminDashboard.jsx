@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <AdminLayout>
-        <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af" }}>
+        <div style={{ padding: "60px", textAlign: "center", color: "white" }}>
           Loading dashboard...
         </div>
       </AdminLayout>
@@ -41,10 +41,10 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div style={{ maxWidth: "1500px", margin: "0 auto" }}>
         <div style={{ marginBottom: "32px" }}>
-          <h1 style={{ fontSize: "28px", fontWeight: 700 }}>
+          <h1 style={{ fontSize: "28px", fontWeight: 700, color: "white" }}>
             Admin Dashboard
           </h1>
-          <p style={{ color: "#6b7280", marginTop: "6px" }}>
+          <p style={{ color: "grey", marginTop: "6px" }}>
             System analytics overview
           </p>
         </div>
